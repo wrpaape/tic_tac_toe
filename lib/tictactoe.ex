@@ -1,2 +1,0 @@
-defmodule Tictactoe do
-end
