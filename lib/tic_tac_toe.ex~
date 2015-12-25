@@ -26,6 +26,12 @@ defmodule TicTacToe do
     |> Helper.wrap_pre(:ok)
   end
 
+  def handle_call(:state, _from, board) do
+    board
+    |> IO.inspect
+    |> Tuple.duplicate(2)
+    |> Tuple.insert_at(0, :reply)
+  end
   # helpers v
 end
 
