@@ -4,6 +4,7 @@ defmodule TicTacToe do
   alias IO.ANSI
   alias TicTacToe.Helper
 
+  @def_size    3
   @empty_token "-"
   @p1_token    "X"
   @p2_token    "O"
