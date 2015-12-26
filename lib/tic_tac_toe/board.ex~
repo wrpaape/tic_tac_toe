@@ -1,12 +1,11 @@
 defmodule TicTacToe.Board do
   use GenServer
 
-  alias IO.ANSI
   alias TicTacToe.Helper
 
-  @tokens ~w(X O)
-
   def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
+
+  def add_tokens(tokens), do: GenServer.cast(__MODULE__, tokens, name: __MODULE__)
 
   def state,                  do: GenServer.call(__MODULE__, :state)
 
@@ -26,8 +25,14 @@ defmodule TicTacToe.Board do
       open_moves
       |> Enum.map(&{&1, &1})
       
-    {board, open_moves, [], [], Enum.random(@tokens)}
+    {board, open_moves}
     |> Helper.wrap_pre(:ok)
+  end
+
+  def handle_cast({:add_tokens, tokens}, state) do
+    tokens  
+    |> Stream.cycle
+    |> 
   end
 
   def handle_call(:state, _from, board) do

@@ -1,5 +1,4 @@
 defmodule TicTacToe.CLI do
-  alias IO.ANSI
   alias TicTacToe.Helper
   alias TicTacToe.Board
   
@@ -10,7 +9,7 @@ defmodule TicTacToe.CLI do
     |> Enum.map(&<<&1 :: 16>>)
     |> Enum.filter(&(String.valid_character?(&1) and String.printable?(&1) and String.match?(&1, @valid_reg)))
     |> Enum.into(HashSet.new)
-  @blink_cursor Helper.cap("\n > ", ANSI.blink_slow, ANSI.blink_off)
+  @blink_cursor Helper.cap_reset("\n > ", :blink_slow)
   @parse_opts   [
     switches: [help: :boolean],
     aliases:  [h:    :help]
@@ -26,22 +25,21 @@ defmodule TicTacToe.CLI do
 
   def process({board_size, _}) when board_size in @valid_sizes, do: process(board_size)
   def process({board_size, _}), do: alert_and_halt("board_size must be an integer > 0 and < 5")
-  def process(:help),           do: alert_and_halt("usage: tic_tac_toe <board_size>", ANSI.blue)
+  def process(:help),           do: alert_and_halt("usage: tic_tac_toe <board_size>", :blue)
   def process(:error),          do: alert_and_halt("failed to parse board_size (integer)")
   def process(board_size)       do
     {turn, turn_str} =
       "heads or tails (h/t)?"
-      |> Helper.str_app( @blink_cursor)
+      |> Helper.str_app(@blink_cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
       |> if do: {1, "first"}, else: {2, "second"}
 
-    p1_token =
+    {p1_token, p2_token}=
       turn_str
       |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
       |> Helper.str_app(@blink_cursor)
-      |> IO.gets
-      |> String.first
+      |> select_tokens
   end
 
   def parse_args(argv) do
@@ -65,9 +63,32 @@ defmodule TicTacToe.CLI do
     |> Regex.compile!("i")
   end
 
-  defp alert_and_halt(msg, color \\ ANSI.red) do
+  def select_tokens(prompt) do
+    token =
+      prompt
+      |> IO.gets
+      |> String.first
+
+    @valid_tokens
+    |> Set.member?(token)
+    |> if do
+      @valid_tokens
+      |> Set.delete(token)
+      |> Enum.random
+      |> Helper.wrap_pre(token)
+    else
+      "invalid token"
+      |> Helper.cap_reset(:red)
+      |> IO.puts
+
+      prompt
+      |> select_tokens
+    end
+  end
+
+  defp alert_and_halt(msg, color \\ :red) do
     msg   
-    |> Helper.cap(color, ANSI.reset)
+    |> Helper.cap_reset(color)
     |> IO.puts
 
     System.halt(0)
