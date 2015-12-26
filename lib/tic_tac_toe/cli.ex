@@ -3,8 +3,14 @@ defmodule TicTacToe.CLI do
   alias TicTacToe.Helper
   alias TicTacToe.Board
   
-  @valid_sizes  1..4
   @default_size 3
+  @valid_sizes  1..4
+  @valid_reg    ~r/[^\p{Z}\p{C}0-9]/
+  @valid_tokens 0x00400..0x3ffff
+    |> Enum.map(&<<&1 :: 16>>)
+    |> Enum.filter(&(String.valid_character?(&1) and String.printable?(&1) and String.match?(&1, @valid_reg)))
+    |> Enum.into(HashSet.new)
+  @blink_cursor Helper.cap("\n > ", ANSI.blink_slow, ANSI.blink_off)
   @parse_opts   [
     switches: [help: :boolean],
     aliases:  [h:    :help]
@@ -22,7 +28,21 @@ defmodule TicTacToe.CLI do
   def process({board_size, _}), do: alert_and_halt("board_size must be an integer > 0 and < 5")
   def process(:help),           do: alert_and_halt("usage: tic_tac_toe <board_size>", ANSI.blue)
   def process(:error),          do: alert_and_halt("failed to parse board_size (integer)")
-  def process(board_size),      do: Board.start_link(board_size)
+  def process(board_size)       do
+    {turn, turn_str} =
+      "heads or tails (h/t)?"
+      |> Helper.str_app( @blink_cursor)
+      |> IO.gets
+      |> String.match?(coin_flip_reg)
+      |> if do: {1, "first"}, else: {2, "second"}
+
+    p1_token =
+      turn_str
+      |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
+      |> Helper.str_app(@blink_cursor)
+      |> IO.gets
+      |> String.first
+  end
 
   def parse_args(argv) do
     argv
@@ -37,6 +57,13 @@ defmodule TicTacToe.CLI do
   end
 
   #helpers V
+
+  defp coin_flip_reg do
+    ~w(h t)
+    |> Enum.random
+    |> Helper.str_pre("^")
+    |> Regex.compile!("i")
+  end
 
   defp alert_and_halt(msg, color \\ ANSI.red) do
     msg   

@@ -26,8 +26,8 @@ defmodule TicTacToe.Board do
       open_moves
       |> Enum.map(&{&1, &1})
       
-      {board, open_moves, [], [], Enum.random(@tokens)}
-      |> Helper.wrap_pre(:ok)
+    {board, open_moves, [], [], Enum.random(@tokens)}
+    |> Helper.wrap_pre(:ok)
   end
 
   def handle_call(:state, _from, board) do
