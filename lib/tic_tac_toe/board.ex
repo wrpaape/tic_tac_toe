@@ -12,10 +12,6 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(board_size \\ 3) do
-    winning_moves =
-      board_size
-      |> calculate_winning_moves
-
     open_moves =
       board_size
       |> :math.pow(2)
@@ -25,19 +21,23 @@ defmodule TicTacToe.Board do
        [Integer.to_string(pos) | moves] 
       end)
 
+    winning_moves =
+      board_size
+      |> calculate_winning_moves(open_moves)
+
     board =
       open_moves
       |> Enum.map(&{&1, &1})
       
-    {board, open_moves, winning_moves}
+    {board, Enum.into(open_moves, HashSet.new), winning_moves}
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_cast({:add_tokens, tokens}, state) do
-    tokens  
-    |> Stream.cycle
-    |> 
-  end
+  # def handle_cast({:add_tokens, tokens}, state) do
+  #   tokens  
+  #   |> Stream.cycle
+  #   |> 
+  # end
 
   def handle_call(:state, _from, board) do
     board
@@ -45,10 +45,22 @@ defmodule TicTacToe.Board do
     |> Tuple.duplicate(2)
     |> Tuple.insert_at(0, :reply)
   end
+
   # helpers v
 
-  def calculate_winning_moves(board_size) do
-    
+  def calculate_winning_moves(moves, board_size) do
+    moves
+    |> Enum.slice(board_size - 1..-board_size)
+    |> Helper.wrap_app(board_size - 1)
+    |> List.wrap
+    |> List.insert_at(0, ({moves, board_size + 1})
+    |> Enum.map(fn({diag_range, nth})->
+      diag_range
+      |> Enum.take_every(nth)
+      |> Enum.into(HashSet.new)
+    end)
+    |> Enum.into(HashSet.new)
+
   end
 end
 

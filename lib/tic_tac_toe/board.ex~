@@ -21,19 +21,23 @@ defmodule TicTacToe.Board do
        [Integer.to_string(pos) | moves] 
       end)
 
+    winning_moves =
+      board_size
+      |> calculate_winning_moves(open_moves)
+
     board =
       open_moves
       |> Enum.map(&{&1, &1})
       
-    {board, open_moves}
+    {board, Enum.into(open_moves, HashSet.new), winning_moves}
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_cast({:add_tokens, tokens}, state) do
-    tokens  
-    |> Stream.cycle
-    |> 
-  end
+  # def handle_cast({:add_tokens, tokens}, state) do
+  #   tokens  
+  #   |> Stream.cycle
+  #   |> 
+  # end
 
   def handle_call(:state, _from, board) do
     board
@@ -42,5 +46,9 @@ defmodule TicTacToe.Board do
     |> Tuple.insert_at(0, :reply)
   end
   # helpers v
+
+  def calculate_winning_moves(board_size) do
+    winning_moves = HashSet.new
+  end
 end
 
