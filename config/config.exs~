@@ -2,6 +2,23 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+
+valid_tokens =
+  0x00400..0x3ffff
+  |> Enum.map(&<<&1 :: 16>>)
+  |> Enum.filter(fn(char)->
+    String.valid_character?(char) and
+    String.printable?(char)       and
+    String.match?(char, ~r/[^\p{Z}\p{C}0-9]/)
+  end)
+  |> Enum.into(HashSet.new)
+
+config :tic_tac_toe, [
+  min_size: 1,
+  max_size: 4,
+  valid_tokens: valid_tokens
+]
+
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,

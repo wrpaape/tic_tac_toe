@@ -3,12 +3,9 @@ defmodule TicTacToe.CLI do
   alias TicTacToe.Board
   
   @default_size 3
-  @valid_sizes  1..4
-  @valid_reg    ~r/[^\p{Z}\p{C}0-9]/
-  @valid_tokens 0x00400..0x3ffff
-    |> Enum.map(&<<&1 :: 16>>)
-    |> Enum.filter(&(String.valid_character?(&1) and String.printable?(&1) and String.match?(&1, @valid_reg)))
-    |> Enum.into(HashSet.new)
+  @valid_tokens   Helper.get_config(:valid_tokens)
+  @min_size Helper.get_config(:min_size)
+  @max_size Helper.get_config(:max_size)
   @blink_cursor Helper.cap_reset("\n > ", :blink_slow)
   @parse_opts   [
     switches: [help: :boolean],
@@ -23,19 +20,19 @@ defmodule TicTacToe.CLI do
 
   #external API ^
 
-  def process({board_size, _}) when board_size in @valid_sizes, do: process(board_size)
-  def process({board_size, _}), do: alert_and_halt("board_size must be an integer > 0 and < 5")
-  def process(:help),           do: alert_and_halt("usage: tic_tac_toe <board_size>", :blue)
-  def process(:error),          do: alert_and_halt("failed to parse board_size (integer)")
-  def process(board_size)       do
-    {turn, turn_str} =
+  def process({size, _}) when size in @min_size..@max_size, do: process(size)
+  def process({size, _}), do: alert_and_halt("board size must be an integer >= #{@min_size} and <= #{@max_size}")
+  def process(:help),           do: alert_and_halt("usage: tic_tac_toe <size>", :blue)
+  def process(:error),          do: alert_and_halt("failed to parse size (integer)")
+  def process(size)       do
+    {turns_tup, turn_str} =
       "heads or tails (h/t)?"
       |> Helper.str_app(@blink_cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {1, "first"}, else: {2, "second"}
+      |> if do: {{true, false}, "first"}, else: {{false, true}, "second"}
 
-    {p1_token, p2_token}=
+    tokens_tup =
       turn_str
       |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
       |> Helper.str_app(@blink_cursor)
@@ -50,7 +47,7 @@ defmodule TicTacToe.CLI do
        
       {_, [], _}                    -> @default_size
  
-      {_, [board_size_str | _], _}  -> Integer.parse(board_size_str)
+      {_, [size_str | _], _}  -> Integer.parse(size_str)
     end
   end
 

@@ -1,6 +1,8 @@
 defmodule TicTacToe.Helper do
   alias IO.ANSI
 
+  def get_config(key), do: Application.get_env(:tic_tac_toe, key)
+
   def wrap_pre(right, left), do: {left, right}
   def wrap_app(left, right), do: {left, right}
 
