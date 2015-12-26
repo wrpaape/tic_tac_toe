@@ -1,7 +1,7 @@
-defmodule TicTacToe.Board.Initializer do
+defmodule TicTacToe.Board.MoveMap do
   alias TicTacToe.Helper
 
-  def move_map do
+  def build do
     size_range =
       ~w(min_size max_size)a
       |> Enum.map(&apply(Helper, :get_config, [&1]))
@@ -40,7 +40,6 @@ defmodule TicTacToe.Board.Initializer do
         next_cols =
           chunk_tup 
           |> Tuple.to_list
-          |> IO.inspect
           |> Enum.into(HashSet.new)
 
         rows_cols
