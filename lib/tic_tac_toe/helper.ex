@@ -21,7 +21,7 @@ defmodule TicTacToe.Helper do
     @colors
     |> ansi_cycle
     |> Stream.zip(ansi_cycle(@intensities))
-    |> Enum.reduce_while({[], print_chunks(prompt)}, fn
+    |> Enum.reduce_while({[], blink_chunks(prompt)}, fn
       (_fun_tup, {final_rev_chars, []})->
         final_rev_chars
         |> wrap_pre(:halt)
@@ -33,7 +33,7 @@ defmodule TicTacToe.Helper do
     end)
   end
 
-  def print_chunks(str) do
+  def blink_chunks(str) do
     [first_char | rem_chars] =
       str
       |> String.graphemes
