@@ -20,7 +20,7 @@ defmodule TicTacToe.Board do
 
   def state,                 do: GenServer.call(__MODULE__, :state)
 
-  def next_win_tups(move, token, win_tups), do: next_win_tup(move, token, win_tups, [])
+  def next_win_state(move, token, win_state), do: next_win_info(move, token, win_state, [])
 
   # external API ^
   
@@ -33,7 +33,7 @@ defmodule TicTacToe.Board do
   def handle_call({:next_move, {Player, token}}, _from, {win_tups, board, valid_moves}) do
     valid_moves
     |> Player.next_move
-    |> next_win_tups(token, win_tups)
+    |> next_win_infos(token, win_tups)
 
       # {:invalid, valid_moves} -> 
       #   valid_moves
@@ -57,45 +57,52 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
-  defmacrop recurse(next_acc_win_tups) do
+  
+  defmacrop recurse(next_acc_win_state) do
     quote do
-      next_win_tup(var!(move), var!(token), var!(rem_win_tups), unquote(next_acc_win_tups))
+      next_win_info(var!(move), var!(token), var!(rem_win_state), unquote(next_acc_win_state))
     end
   end
 
-  defmacrop reduce_owned_or_unclaimed_win_tup_and_recurse do
+  defmacrop reduce_owned_or_unclaimed_win_info_and_recursdo
     quote do
       var!(win_set)
-      |> Set.member?(var!(move))
-      |> Helper.if_else_tap({Set.delete(var!(win_set), var!(move)), var!(token), var!(size) - 1}, var!(win_tup))
-      |> Helper.push_in(var!(acc_win_tups))
+      |> Set.delete(var!(move))
+      |> case do
+        %HashSet{size: ^var!(size)} -> var!(win_info)
+        next_win_set -> {next_win_set, var!(token)}
+      end
+      |> Helper.push_in(var!(acc_win_state))
       |> recurse
     end
   end
 
-  def next_win_tup(move, token, [own_win_tup = {win_set, token, 1} | rem_win_tups], acc_win_tups) do
+  def next_win_info(move, token, [own_win_info = {win_set = %HashSet{size: 1}, token} | rem_win_state], acc_win_state) do
     win_set
-    |> Set.member?(move)
-    |> if do: :win, else: recurse([own_win_tup | acc_win_tups])
+    |> Set.delete(move)
+    |> case do
+      ^%HashSet{size: 1} -> recurse([own_win_info | acc_win_state])
+      __________ _______ -> :win
+    end
   end
 
-  def next_win_tup(move, token, [win_tup = {win_set, token, size} | rem_win_tups], acc_win_tups) do
-    reduce_owned_or_unclaimed_win_tup_and_recurse 
+  def next_win_info(move, token, [win_info = {win_set = %HashSet{size: size}, token} | rem_win_state], acc_win_state) do
+    reduce_owned_or_unclaimed_win_info_and_recurse
   end
 
-  def next_win_tup(move, token, [win_tup = {win_set, size} | rem_win_tups], acc_win_tups) do
-    reduce_owned_or_unclaimed_win_tup_and_recurse 
+  def next_win_info(move, token, [win_info = win_set = %HashSet{size: size} | rem_win_info], acc_win_state) do
+    reduce_owned_or_unclaimed_win_info_and_recurse
   end
 
-  def next_win_tup(move, token, [occ_win_tup | rem_win_tups], acc_win_tups) do
+  def next_win_info(move, token, [occ_win_tup | rem_win_state], acc_win_state) do
     occ_win_tup
     |> elem(0)
     |> Set.member?(move)
-    |> Helper.if_else_tap(acc_win_tups, [occ_win_tup | acc_win_tups])
+    |> Helper.if_else_tap(acc_win_state, [occ_win_tup | acc_win_state])
     |> recurse
   end
 
-  def next_win_tup(_move, _token, [], []),            do: :tie
-  def next_win_tup(_move, _token, [], next_win_tups), do: next_win_tups
+  def next_win_info(_move, _token, [], []),             do: :tie
+  def next_win_info(_move, _token, [], next_win_state), do: next_win_state
 end
 
