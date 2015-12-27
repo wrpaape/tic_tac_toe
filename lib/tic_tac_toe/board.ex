@@ -31,7 +31,7 @@ defmodule TicTacToe.Board do
   def handle_call({:next_move, {Player, token}}, _from, {win_tups, board, valid_moves}) do
     valid_moves
     |> Player.next_move
-    |> nex_win_set(token, win_tups)
+    |> next_win_tups(token, win_tups)
 
       # {:invalid, valid_moves} -> 
       #   valid_moves
@@ -56,27 +56,51 @@ defmodule TicTacToe.Board do
 
   # helpers v
 
-  def next_win_tup(move, token, [win_tup = {open_win_set, size} | rem_win_tups], next_win_tups) do
-    next_win_tups =
-      move
-      |> Set.member?(open_win_set)
-      |> if do: {open_win_set, token, size - 1}, else: win_tup
-      |> Helper.push_in(next_win_tups)
+  defmacrop recurse(next_win_tups) do
+    quote do
+      # var!(next_win_tups) = next_win_tups
 
-    next_win_tups(move, token, rem_win_tups, next_win_tups)
+      next_win_tup(var!(move), var!(token), var!(rem_win_tups), unquote(next_win_tups))
+      # next_win_tup(var!(move), var!(token), var!(rem_win_tups), var!(next_win_tups))
+    end
   end
-  
 
+  defmacrop reduce_owned_or_unclaimed_win_tup_and_recurse do
+    quote do
+      # var!(next_win_tups) =
+        var!(win_set)
+        |> Set.member?(var!(move))
+        |> if do: {Set.delete(var!(win_set), var!(move)), var!(token), var!(size) - 1}, else: var!(win_tup)
+        |> Helper.push_in(var!(acc_win_tups))
+        |> recurse
+    end
+  end
+
+  def next_win_tup(move, token, [own_win_tup = {win_set, token, 1} | rem_win_tups],acc_win_tups) do
+    win_set
+    |> Set.member?(move)
+    |> if do: :win, else: recurse([own_win_tup | acc_win_tups])
+  end
+
+  def next_win_tup(move, token, [win_tup = {win_set, token, size} | rem_win_tups], acc_win_tups) do
+    reduce_owned_or_unclaimed_win_tup_and_recurse 
+  end
+
+  def next_win_tup(move, token, [occ_win_tup | rem_win_tups], acc_win_tups) do
+    #  acc_win_tups=
+    occ_win_tup
+    |> elem(0)
+    |> Set.member?(move)
+    |> if do: acc_win_tups, else: [occ_win_tup | acc_win_tups]
+    |> recurse
+  end
+
+  def next_win_tup(move, token, [win_tup = {win_set, size} | rem_win_tups], acc_win_tups) do
+    reduce_owned_or_unclaimed_win_tup_and_recurse 
+  end
+
+  def next_win_tup(_move, _token, [], []),            do: :tie
   def next_win_tup(_move, _token, [], next_win_tups), do: next_win_tups
-    # win_tups
-    # |> Enum.reduce_while([], fn
-    #   (->
-        
-    #   (own_win_set, ^token, size}, next_win_tups)->
-    #     move
-    #     |> Set.member?(own_win_set)
-    #     |> if do: size - 1, else: size
-    # end)
 
 end
 
