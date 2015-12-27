@@ -18,6 +18,8 @@ defmodule TicTacToe.Board do
 
   def state,                 do: GenServer.call(__MODULE__, :state)
 
+  def next_win_tups(move, token, win_tups), do: next_win_tup(move, token, win_tups, [])
+
   # external API ^
   
   def init(size) do
@@ -26,7 +28,11 @@ defmodule TicTacToe.Board do
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_call({:next_move, {Player, token}}, _from, {win_sets, board, valid_moves}) do
+  def handle_call({:next_move, {Player, token}}, _from, {win_tups, board, valid_moves}) do
+    valid_moves
+    |> Player.next_move
+    |> nex_win_set(token, win_tups)
+
       # {:invalid, valid_moves} -> 
       #   valid_moves
       #   |> inspect
@@ -37,7 +43,8 @@ defmodule TicTacToe.Board do
       #   |> next_move(next_turn)
   end
 
-  def handle_call({:next_move, {Computer, token}}, _from, {win_sets, board, valid_moves}) do
+
+  def handle_call({:next_move, {Computer, token}}, _from, {win_tups, board, valid_moves}) do
 
   end
 
@@ -48,5 +55,28 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
+
+  def next_win_tup(move, token, [win_tup = {open_win_set, size} | rem_win_tups], next_win_tups) do
+    next_win_tups =
+      move
+      |> Set.member?(open_win_set)
+      |> if do: {open_win_set, token, size - 1}, else: win_tup
+      |> Helper.push_in(next_win_tups)
+
+    next_win_tups(move, token, rem_win_tups, next_win_tups)
+  end
+  
+
+  def next_win_tup(_move, _token, [], next_win_tups), do: next_win_tups
+    # win_tups
+    # |> Enum.reduce_while([], fn
+    #   (->
+        
+    #   (own_win_set, ^token, size}, next_win_tups)->
+    #     move
+    #     |> Set.member?(own_win_set)
+    #     |> if do: size - 1, else: size
+    # end)
+
 end
 

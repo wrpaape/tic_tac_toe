@@ -4,4 +4,4 @@ defmodule TicTacToe.Player do
   
   @warning "invalid move, please select from:\n  "
     |> Helper.cap(ANSI.red, ANSI.bright <> ANSI.yellow)
-endo
+end

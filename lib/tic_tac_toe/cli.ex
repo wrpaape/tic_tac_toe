@@ -32,17 +32,17 @@ defmodule TicTacToe.CLI do
 
     Computer.start_link
     
-    {wrap, turn_str} =
+    {wrap_dir, turn_str} =
       "heads or tails (h/t)?"
       |> Helper.str_app(@blink_cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {:wrap_app, "first"}, else: {:wrap_pre, "second"}
+      |> if do: {:a, "first"}, else: {:p, "second"}
 
       turn_str
       |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
       |> Helper.str_app(@blink_cursor)
-      |> assign_tokens(wrap)
+      |> assign_tokens(wrap_dir)
       |> TicTacToe.start
   end
 
@@ -67,7 +67,7 @@ defmodule TicTacToe.CLI do
     |> Regex.compile!("i")
   end
 
-  def assign_tokens(prompt, wrap) do
+  def assign_tokens(prompt, wrap_dir) do
     token =
       prompt
       |> IO.gets
@@ -80,14 +80,14 @@ defmodule TicTacToe.CLI do
       |> Set.delete(token)
       |> Enum.random
       |> Helper.wrap_pre(Computer)
-      |> Helper.app_wrap({Player, token}, wrap)
+      |> Helper.wrap({Player, token}, wrap_dir)
     else
       "invalid token"
       |> Helper.cap_reset(:red)
       |> IO.puts
 
       prompt
-      |> assign_tokens(wrap)
+      |> assign_tokens(wrap_dir)
     end
   end
 
