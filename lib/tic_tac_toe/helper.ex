@@ -4,6 +4,10 @@ defmodule TicTacToe.Helper do
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
 
+  defmacro if_else_tap(bool, if_exp, else_exp) do
+    quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
+  end
+
   def get_config(key), do: Application.get_env(:tic_tac_toe, key)
 
   def wrap_pre(right, left), do: {left, right}
@@ -20,10 +24,6 @@ defmodule TicTacToe.Helper do
 
   def str_pre(rstr, lstr), do: lstr <> rstr
   def str_app(lstr, rstr), do: lstr <> rstr
-
-  defmacro if_else_tap(bool, if_exp, else_exp) do
-    quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
-  end
 
   def fun_prompt(prompt) do
     @colors

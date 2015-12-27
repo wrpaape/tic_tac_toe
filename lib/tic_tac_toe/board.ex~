@@ -57,7 +57,6 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
-
   defmacrop recurse(next_acc_win_tups) do
     quote do
       next_win_tup(var!(move), var!(token), var!(rem_win_tups), unquote(next_acc_win_tups))
@@ -92,11 +91,7 @@ defmodule TicTacToe.Board do
     occ_win_tup
     |> elem(0)
     |> Set.member?(move)
-    |> if do
-      acc_win_tups
-    else
-      [occ_win_tup | acc_win_tups];
-    end
+    |> Helper.if_else_tap(acc_win_tups, [occ_win_tup | acc_win_tups])
     |> recurse
   end
 

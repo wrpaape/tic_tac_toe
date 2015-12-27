@@ -15,7 +15,8 @@ defmodule TicTacToe.Board.MoveMapBuilder do
       
       move_tup =
         move_list
-        |> win_sets(size)
+        |> Enum.chunk(size)
+        |> win_sets
         |> Helper.wrap_app(Enum.map(move_list, &{&1, &1}))
         |> Tuple.append(Enum.into(move_list, HashSet.new))
       
@@ -26,30 +27,19 @@ defmodule TicTacToe.Board.MoveMapBuilder do
 
   #external API ^
 
-  def win_sets(move_list, size) do
-    row_chunks = 
-      move_list
-      |> Enum.chunk(size)
-
-    init_win_set = fn(win_list)->
-      win_list
-      |> Enum.into(HashSet.new)
-      |> Helper.wrap_app(size)
-    end
-    
+  def win_sets(row_chunks) do
     rows =
       row_chunks
-      |> Enum.map(init_win_set)
+      |> Enum.map(&Enum.into(&1, HashSet.new))
       
     rows_cols =
       row_chunks
       |> List.zip
       |> Enum.reduce(rows, fn(chunk_tup, rows_cols)->
-        next_win_list =
-          chunk_tup 
-          |> Tuple.to_list
-
-        [init_win_set.(next_win_list) | rows_cols]
+        chunk_tup 
+        |> Tuple.to_list
+        |> Enum.into(HashSet.new)
+        |> Helper.push_in(rows_cols)
       end)
 
     row_chunks
@@ -62,7 +52,7 @@ defmodule TicTacToe.Board.MoveMapBuilder do
         |> Tuple.append(inc)
       end)
     end)
-    |> Enum.reduce(rows_cols, &[{elem(&1, 0), size} | &2])
+    |> Enum.reduce(rows_cols, &[elem(&1, 0) | &2])
   end
 
   def move_list(size) do

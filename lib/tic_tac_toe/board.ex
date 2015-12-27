@@ -57,7 +57,7 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
-
+  
   defmacrop recurse(next_acc_win_tups) do
     quote do
       next_win_tup(var!(move), var!(token), var!(rem_win_tups), unquote(next_acc_win_tups))
