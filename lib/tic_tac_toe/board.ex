@@ -6,6 +6,8 @@ defmodule TicTacToe.Board do
   alias TicTacToe.Player
   alias TicTacToe.Computer
 
+  require Helper
+
   @move_map __MODULE__
     |> Module.safe_concat(MoveMapBuilder)
     |> apply(:build, [])
@@ -66,11 +68,7 @@ defmodule TicTacToe.Board do
     quote do
       var!(win_set)
       |> Set.member?(var!(move))
-      |> if do
-        {Set.delete(var!(win_set), var!(move)), var!(token), var!(size) - 1}
-      else
-        var!(win_tup)
-      end
+      |> Helper.if_else_tap({Set.delete(var!(win_set), var!(move)), var!(token), var!(size) - 1}, var!(win_tup))
       |> Helper.push_in(var!(acc_win_tups))
       |> recurse
     end
@@ -94,16 +92,11 @@ defmodule TicTacToe.Board do
     occ_win_tup
     |> elem(0)
     |> Set.member?(move)
-    |> if do
-      acc_win_tups
-    else
-      [occ_win_tup | acc_win_tups];
-    end
+    |> Helper.if_else_tap(acc_win_tups, [occ_win_tup | acc_win_tups])
     |> recurse
   end
 
   def next_win_tup(_move, _token, [], []),            do: :tie
   def next_win_tup(_move, _token, [], next_win_tups), do: next_win_tups
-  # def next_win_tup(_move, _token, [], next_win_tups), do: IO.puts "HI"
 end
 

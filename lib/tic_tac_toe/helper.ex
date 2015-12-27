@@ -21,6 +21,10 @@ defmodule TicTacToe.Helper do
   def str_pre(rstr, lstr), do: lstr <> rstr
   def str_app(lstr, rstr), do: lstr <> rstr
 
+  defmacro if_else_tap(bool, if_exp, else_exp) do
+    quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
+  end
+
   def fun_prompt(prompt) do
     @colors
     |> ansi_cycle
@@ -37,7 +41,7 @@ defmodule TicTacToe.Helper do
     end)
   end
 
-  def blink_chunks(str) do
+  defp blink_chunks(str) do
     [first_char | rem_chars] =
       str
       |> String.graphemes
@@ -57,7 +61,7 @@ defmodule TicTacToe.Helper do
     |> List.update_at(0, &(&1 <> ANSI.reset))
   end
 
-  def ansi_cycle(ansi_funs) do
+  defp ansi_cycle(ansi_funs) do
     ansi_funs
     |> Enum.map(&apply(ANSI, &1, []))
     |> Stream.cycle
