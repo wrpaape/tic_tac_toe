@@ -4,12 +4,10 @@ defmodule TicTacToe.Board do
   alias TicTacToe.Helper
 
   @move_map __MODULE__
-    |> Module.concat(Initializer)
-    |> apply(:move_map, [])
+    |> Module.safe_concat(MoveMapBuilder)
+    |> apply(:build, [])
 
   def start_link(size), do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
-
-  def add_tokens(tokens), do: GenServer.cast(__MODULE__, tokens, name: __MODULE__)
 
   def state,                  do: GenServer.call(__MODULE__, :state)
 
@@ -26,10 +24,10 @@ defmodule TicTacToe.Board do
   #   |> Stream.cycle
   #   |> 
   # end
+  def print
 
   def handle_call(:state, _from, board) do
     board
-    |> IO.inspect
     |> Tuple.duplicate(2)
     |> Tuple.insert_at(0, :reply)
   end

@@ -25,6 +25,8 @@ defmodule TicTacToe.Board.MoveMapBuilder do
     end)
   end
 
+  #external API ^
+
   def winning_moves(row_chunks) do
     rows =
       row_chunks
@@ -68,7 +70,7 @@ defmodule TicTacToe.Board.MoveMapBuilder do
     |> trunc
     |> Range.new(1)
     |> Enum.reduce([], fn(pos, moves)->
-     [Integer.to_string(pos) | moves] 
+      [Integer.to_string(pos) | moves] 
     end)
   end
 end

@@ -1,4 +1,4 @@
-defmodule TicTacToe.Board.MoveMap do
+defmodule TicTacToe.Board.MoveMapBuilder do
   alias TicTacToe.Helper
 
   def build do
@@ -24,6 +24,8 @@ defmodule TicTacToe.Board.MoveMap do
       |> Map.put(size, move_tup)
     end)
   end
+
+  #external API ^
 
   def winning_moves(row_chunks) do
     rows =

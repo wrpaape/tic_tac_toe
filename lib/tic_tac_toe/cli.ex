@@ -1,11 +1,13 @@
 defmodule TicTacToe.CLI do
   alias TicTacToe.Helper
   alias TicTacToe.Board
+  alias TicTacToe.Computer
+  alias TicTacToe.Player
   
-  @default_size 3
-  @valid_tokens   Helper.get_config(:valid_tokens)
-  @min_size Helper.get_config(:min_size)
-  @max_size Helper.get_config(:max_size)
+  @valid_tokens Helper.get_config(:valid_tokens)
+  @min_size     Helper.get_config(:min_size)
+  @max_size     Helper.get_config(:max_size)
+  @def_size     Helper.get_config(:def_size)
   @blink_cursor Helper.cap_reset("\n > ", :blink_slow)
   @parse_opts   [
     switches: [help: :boolean],
@@ -25,29 +27,34 @@ defmodule TicTacToe.CLI do
   def process(:help),     do: alert_and_halt("usage: tic_tac_toe <size>", :blue)
   def process(:error),    do: alert_and_halt("failed to parse size (integer)")
   def process(size)       do
-    {turns_tup, turn_str} =
+    size
+    |> Board.start_link
+
+    Computer.start_link
+    
+    {player_index, turn_str} =
       "heads or tails (h/t)?"
       |> Helper.str_app(@blink_cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {{true, false}, "first"}, else: {{false, true}, "second"}
+      |> if do: {0, "first"}, else: {1, "second"}
 
-    tokens_tup =
       turn_str
       |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
       |> Helper.str_app(@blink_cursor)
-      |> select_tokens
+      |> select_tokens(player_index)
+      |> TicTacToe.start
   end
 
   def parse_args(argv) do
     argv
     |> OptionParser.parse(@parse_opts)
     |> case do
-      {[help: true], _, _ }         -> :help
+      {[help: true], _, _ }  -> :help
        
-      {_, [], _}                    -> @default_size
+      {_, [], _}             -> @def_size
  
-      {_, [size_str | _], _}  -> Integer.parse(size_str)
+      {_, [size_str | _], _} -> Integer.parse(size_str)
     end
   end
 
@@ -60,7 +67,7 @@ defmodule TicTacToe.CLI do
     |> Regex.compile!("i")
   end
 
-  def select_tokens(prompt) do
+  def select_tokens(prompt, player_index) do
     token =
       prompt
       |> IO.gets
@@ -72,14 +79,16 @@ defmodule TicTacToe.CLI do
       @valid_tokens
       |> Set.delete(token)
       |> Enum.random
-      |> Helper.wrap_pre(token)
+      |> Helper.wrap_pre(Computer)
+      |> List.wrap
+      |> List.insert_at(player_index, {Player, token})
     else
       "invalid token"
       |> Helper.cap_reset(:red)
       |> IO.puts
 
       prompt
-      |> select_tokens
+      |> select_tokens(player_index)
     end
   end
 
