@@ -1,38 +1,18 @@
 defmodule TicTacToe do
-  alias IO.ANSI
-  alias TicTacToe.Helper
   alias TicTacToe.Board
 
-  @warning "invalid move, please select from:\n  "
-    |> Helper.cap(ANSI.red, ANSI.bright <> ANSI.yellow)
-
-  def start(tokens) do
-    tokens
-    |> Stream.cycle
-    |> Enum.reduce_while(1, fn(player_tup, turn)->
-      player_tup
-      |> next_move(turn + 1)
-    end)
+  def start({next_up, on_deck}) do
+    next_up
+    |> next_move(on_deck)
     |> game_over
-
-    System.halt(0)
   end
 
-  def next_move(player_tup = {module, token}, next_turn) do
-    module.next_move
-    |> Board.move_token(token)
+  def next_move(next_up, on_deck) do
+    next_up
+    |> Board.next_move
     |> case do
-      :ok           -> {:cont, next_turn} 
-      :tie          -> {:halt, "cat's game"}
-      {:win, moves} -> {:halt, {token, moves, next_turn}}
-      {:invalid, valid_moves} -> 
-        valid_moves
-        |> inspect
-        |> Helper.cap(@warning, ANSI.reset)
-        |> IO.puts
-
-        player_tup
-        |> next_move(next_turn)
+      :ok    -> next_move(on_deck, next_up)
+      go_msg -> go_msg
     end
   end
 
@@ -41,11 +21,10 @@ defmodule TicTacToe do
     
   end
 
-  def game_over(tie_prompt) do
-    tie_prompt
-    |> Helper.fun_prompt
-    |> Enum.each(fn(fun_char)->
-      fun_char
+  def game_over(prompt_chunks) do
+    prompt_chunks
+    |> Enum.each(fn(chunk)->
+      chunk
       |> IO.write
 
       :timer.sleep 250
