@@ -19,7 +19,7 @@ defmodule Misc do
   defmacro str_app(lstr, rstr), do: quote do: unquote(lstr) <> unquote(rstr)
   
 
-  defmacro cap_reset(str, ansi_fun), do: quote do: unquote(str) <> apply(ANSI, unquote(ansi_fun), []) <> ANSI.reset
+  defmacro cap_reset(str, fun), do: quote do: unquote(str) <> apply(ANSI, unquote(fun), []) <> ANSI.reset
 
   defmacro dup_str(len, str), do: quote do: String.duplicate(unquote(str), unquote(len))
 
@@ -58,6 +58,12 @@ defmodule Misc do
 
   def wrap(right, left, :pre), do: {left, right} 
   def wrap(left, right, :app), do: {left, right} 
+
+  def fetch_dims! do
+    {:ok, rows} = :io.rows
+    {:ok, cols} = :io.columns
+    {rows, cols}
+  end
 
   # defmacrop pad(len), do: quote do: dup_str(unquote(len), " ")
 
