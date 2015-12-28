@@ -1,13 +1,11 @@
 defmodule TicTacToe.Board.StateMapBuilder do
   require Misc
   
+  @min_size Misc.get_config(:min_size)
+  @max_size Misc.get_config(:max_size)
+  
   def build do
-    size_range =
-      ~w(min_size max_size)a
-      |> Enum.map(&apply(Misc, :get_config, [&1]))
-
-    Range
-    |> apply(:new, size_range)
+    @min_size..@max_size
     |> Enum.reduce(Map.new, fn(size, state_map)->
       valid_moves = 
         size
@@ -58,11 +56,11 @@ defmodule TicTacToe.Board.StateMapBuilder do
     |> Enum.reduce(rows_cols, &[elem(&1, 0) | &2])
   end
 
-  def move_list(size) do
+  defp move_list(size), do: Enum.to_list(1..last_cell(size))
+
+  defp last_cell(size) do
     size
     |> :math.pow(2)
     |> trunc
-    |> Range.new(1)
-    |> Enum.reduce([], &[&1 | &2])
   end
 end
