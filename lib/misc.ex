@@ -17,9 +17,55 @@ defmodule Misc do
   
   defmacro str_pre(rstr, lstr), do: quote do: unquote(lstr) <> unquote(rstr)
   defmacro str_app(lstr, rstr), do: quote do: unquote(lstr) <> unquote(rstr)
+  
 
   defmacro cap_reset(str, ansi_fun), do: quote do: unquote(str) <> apply(ANSI, unquote(ansi_fun), []) <> ANSI.reset
 
+  defmacro dup_str(len, str), do: quote do: String.duplicate(unquote(str), unquote(len))
+
+  # defmacro apply_wrap_pre(right, left, mod, fun) do
+  #   quote do
+  #     {apply(unquote(mod), unquote(fun), [unquote(left)]), apply(unquote(mod), unquote(fun), [unquote(right)])}
+  #   end
+  # end
+
+  # defmacro apply_wrap_app(left, right, mod, fun) do
+  #   quote do
+  #     {apply(unquote(mod), unquote(fun), [unquote(left)]), apply(unquote(mod), unquote(fun), [unquote(right)])}
+  #   end
+  # end
+
+  defmacro split_pads(len) do
+    quote do
+      pad_len = div(len, 2)
+      pad_wrap(pad_len, pad_len)
+    end
+  end
+
+  defmacro ljust_pads(len) do
+    quote do
+      {lpad_len, rem_len} = div_rem(unquote(len), 2)
+      pad_wrap(lpad_len, lpad_len + rem_len)
+    end
+  end
+
+  defmacro riust_pads(len) do
+    quote do
+      {rpad_len, rem_len} = div_rem(unquote(len), 2)
+      pad_wrap(rpad_len, rpad_len + rem_len)
+    end
+  end
+
   def wrap(right, left, :pre), do: {left, right} 
   def wrap(left, right, :app), do: {left, right} 
+
+  # defmacrop pad(len), do: quote do: dup_str(unquote(len), " ")
+
+  defmacrop div_rem_two(nmr), do: quote do: {div(unquote(nmr), 2), rem(unquote(nmr), 2)} 
+
+  defmacrop pad(len), do: quote do: String.duplicate(" ", unquote(len))
+
+  defmacrop pad_wrap(left, right), do: quote do: {pad(unquote(left)), pad(unquote(right))}
+
+  # defmacrop div_rem(nmr, dvr), do: quote do: {div(unquote(nmr), unquote(dvr)), rem(unquote(nmr), unquote(dvr))}
 end

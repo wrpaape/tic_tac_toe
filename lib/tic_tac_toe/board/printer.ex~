@@ -5,24 +5,63 @@ defmodule TicTacToe.Board.Printer do
 
   def start_link(size), do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
-  def print(board),     do: GenServer.cast(__MODULE__, {:print, board})
+  def print(move, token),     do: GenServer.cast(__MODULE__, {:print, move, token})
 
   # external API ^
 
   def init(size) do
-    cols = fetch_cols!
+    dims = fetch_dims!
 
-    allocated_cols =
-      cols
-      |> allocate_cols(size)
+    allocated_dims =
+      dims
+      |> allocate_dims(size)
 
-    {:ok, size, cols, allocated_cols}
+    {:ok, size, dims, allocated_dims}
   end
 
   # helpers v
 
-  defp allocate_cols(cols, size) do
+
+  defp allocate_dims(cols, size) do
+    &div(&1 -  1, size)
+    next_board =
+      board
+      |> List.update_at(row_fun.(next_move), fn(row)->
+        row
+        |> List.keyreplace_at(next_move, 0, {next_move, token})
+      end)
     
   end
-  defp fetch_cols!, do: elem(:io.columns, 1)
+
+  # defp fetch_dims!, do: Enum.map(~w(rows columns)a, &elem(apply(:io, dim, []), 1))
+  defp fetch_dims! do
+    {:ok, rows} = :io.rows
+    {:ok, cols} = :io.columns
+
+    {rows, cols}
+  end
+  
+
+  defp split_pads(rem_cols) do
+    rem_cols
+    |> div(2)
+    |> Misc.pad
+    |> Tuple.duplicate(2)
+  end
+
+  defp ljust_pads(rem_cols) do
+    {lpad_len, rem} =
+      rem_cols
+      |> Misc.div_rem(2)
+    
+    {Misc.pad(lpad_len), Misc.pad(lpad_len + rem)}
+  end
+
+  defp outer_pads(rem_cols) do
+    lpad_len = div(rem_cols, 2)
+    lpad_len = div(rem_cols, 2)
+
+    {}
+  end
+
 end

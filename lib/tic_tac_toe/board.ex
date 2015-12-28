@@ -4,8 +4,6 @@ defmodule TicTacToe.Board do
   alias TicTacToe.Board.Printer
   alias TicTacToe.Board.StateMapBuilder
 
-  require Misc
-
   @state_map StateMapBuilder.build
 
   def start_link(size),      do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
@@ -19,28 +17,25 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(size) do
-    @state_map
-    |> Map.get(size)
-    |> Tuple.append(&div(&1 -  1, size))
-    |> Misc.wrap_pre(:ok)
+    {valid_moves, win_state, board} =
+      @state_map
+      |> Map.get(size)
+
+    size
+    |> Printer.start_link(board)
+
+    {:ok, valid_moves, win_state}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state, board, row_fun}) do
+  def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state}) do
     next_move =
       player
       |> apply(:next_move, [valid_moves, win_state])
       
-    next_board =
-      board
-      |> List.update_at(row_fun.(next_move), fn(row)->
-        row
-        |> List.keyreplace_at(next_move, 0, {next_move, token})
-      end)
-
-    next_board
-    |> Printer.print
+    next_move
+    |> Printer.print(token)
 
     next_move
     |> next_win_state(token, win_state)
@@ -49,7 +44,7 @@ defmodule TicTacToe.Board do
         {:stop, :shutdown, go_msg, next_board}
 
       next_win_state -> 
-        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state, next_board, row_fun}}
+        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}
     end
   end
 
