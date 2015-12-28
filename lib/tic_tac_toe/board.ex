@@ -6,8 +6,6 @@ defmodule TicTacToe.Board do
   alias TicTacToe.Player
   alias TicTacToe.Computer
 
-  require Helper
-
   @move_map __MODULE__
     |> Module.safe_concat(MoveMapBuilder)
     |> apply(:build, [])
@@ -33,7 +31,7 @@ defmodule TicTacToe.Board do
   def handle_call({:next_move, {Player, token}}, _from, {win_tups, board, valid_moves}) do
     valid_moves
     |> Player.next_move
-    |> next_win_infos(token, win_tups)
+    |> next_win_state(token, win_tups)
 
       # {:invalid, valid_moves} -> 
       #   valid_moves
@@ -58,31 +56,29 @@ defmodule TicTacToe.Board do
 
   # helpers v
   
-  defmacrop recurse(next_acc_win_state) do
+  defmacrop recurse(next_win_info) do
     quote do
-      next_win_info(var!(move), var!(token), var!(rem_win_state), unquote(next_acc_win_state))
+      var!(acc_win_state) = [unquote(next_win_info) | var!(acc_win_state)]
+
+      recurse
     end
   end
 
-  defmacrop reduce_owned_or_unclaimed_win_info_and_recursdo
+  defmacrop recurse do
+    quote do
+      next_win_info(var!(move), var!(token), var!(rem_win_state), var!(acc_win_state))
+    end
+  end
+
+  defmacrop reduce_owned_or_unclaimed_win_info_and_recurse do
     quote do
       var!(win_set)
       |> Set.delete(var!(move))
       |> case do
-        %HashSet{size: ^var!(size)} -> var!(win_info)
-        next_win_set -> {next_win_set, var!(token)}
+        %HashSet{size: ^var!(size)} -> recurse(var!(win_info))
+        %HashSet{size: 0}           -> :win
+        next_win_set                -> recurse({next_win_set, var!(token)})
       end
-      |> Helper.push_in(var!(acc_win_state))
-      |> recurse
-    end
-  end
-
-  def next_win_info(move, token, [own_win_info = {win_set = %HashSet{size: 1}, token} | rem_win_state], acc_win_state) do
-    win_set
-    |> Set.delete(move)
-    |> case do
-      ^%HashSet{size: 1} -> recurse([own_win_info | acc_win_state])
-      __________ _______ -> :win
     end
   end
 
@@ -94,12 +90,11 @@ defmodule TicTacToe.Board do
     reduce_owned_or_unclaimed_win_info_and_recurse
   end
 
-  def next_win_info(move, token, [occ_win_tup | rem_win_state], acc_win_state) do
-    occ_win_tup
+  def next_win_info(move, token, [occ_win_info | rem_win_state], acc_win_state) do
+    occ_win_info
     |> elem(0)
     |> Set.member?(move)
-    |> Helper.if_else_tap(acc_win_state, [occ_win_tup | acc_win_state])
-    |> recurse
+    |> if do: recurse, else: recurse(occ_win_info)
   end
 
   def next_win_info(_move, _token, [], []),             do: :tie

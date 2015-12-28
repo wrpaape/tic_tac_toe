@@ -14,7 +14,7 @@ valid_tokens =
   |> Enum.into(HashSet.new)
 
 config :tic_tac_toe, [
-  min_size: 2,
+  min_size: 1,
   max_size: 4,
   def_size: 3,
   valid_tokens: valid_tokens
