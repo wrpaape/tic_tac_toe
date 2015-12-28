@@ -20,6 +20,6 @@ defmodule Misc do
 
   defmacro cap_reset(str, ansi_fun), do: quote do: unquote(str) <> apply(ANSI, unquote(ansi_fun), []) <> ANSI.reset
 
-  def wrap(right, left, :p), do: {left, right} 
-  def wrap(left, right, :a), do: {left, right} 
+  def wrap(right, left, :pre), do: {left, right} 
+  def wrap(left, right, :app), do: {left, right} 
 end

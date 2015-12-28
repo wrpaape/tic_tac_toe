@@ -5,6 +5,8 @@ defmodule Misc do
   #   quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
   # end
 
+  defmacro get_config(key), do: quote do: Application.get_env(:tic_tac_toe, unquote(key))
+
   defmacro wrap_pre(right, left), do: quote do: {unquote(left), unquote(right)}
   defmacro wrap_app(left, right), do: quote do: {unquote(left), unquote(right)}
 
@@ -20,6 +22,4 @@ defmodule Misc do
 
   def wrap(right, left, :p), do: {left, right} 
   def wrap(left, right, :a), do: {left, right} 
-
-  defmacro get_config(key), do: quote do: Application.get_env(:tic_tac_toe, unquote(key))
 end
