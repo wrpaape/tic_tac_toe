@@ -25,13 +25,20 @@ defmodule TicTacToe.Board do
   def init(size) do
     @move_map
     |> Map.get(size)
+    |> Tuple.append(size)
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_call({:next_move, {Player, token}}, _from, {win_tups, board, valid_moves}) do
-    valid_moves
-    |> Player.next_move
-    |> next_win_state(token, win_tups)
+  def handle_call({:next_move, {Player, token}}, _from, {win_state, board, valid_moves, size, }) do
+    next_move =
+      valid_moves
+      |> Player.next_move
+      
+    next_board =
+      next_move
+      |> update_board(token, board, [])
+
+    |> next_win_state(token, win_state)
 
       # {:invalid, valid_moves} -> 
       #   valid_moves
@@ -44,7 +51,7 @@ defmodule TicTacToe.Board do
   end
 
 
-  def handle_call({:next_move, {Computer, token}}, _from, {win_tups, board, valid_moves}) do
+  def handle_call({:next_move, {Computer, token}}, _from, {win_state, board, valid_moves}) do
 
   end
 
@@ -55,6 +62,11 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
+
+  def
+  def update_board(move, token, [next_row | rem_rows], scan_rows) do
+    board
+  end
   
   defmacrop recurse(next_acc_state) do
     quote do
