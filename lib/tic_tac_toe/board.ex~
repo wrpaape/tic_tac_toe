@@ -1,7 +1,7 @@
 defmodule TicTacToe.Board do
   use GenServer
   
-  alias TicTacToe.Helper
+  alias TicTacToe.Misc
   alias TicTacToe.Board.Printer
   alias TicTacToe.Board.StateMapBuilder
 
@@ -9,9 +9,9 @@ defmodule TicTacToe.Board do
 
   def start_link(size),      do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
-  def next_move(player_tup), do: GenServer.call({:next_move, player_tup})
-
   def state,                 do: GenServer.call(__MODULE__, :state)
+
+  def next_move(player_tup), do: GenServer.call(__MODULE__, {:next_move, player_tup})
 
   def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
 
@@ -21,8 +21,10 @@ defmodule TicTacToe.Board do
     @state_map
     |> Map.get(size)
     |> Tuple.append(&div(&1 -  1, size))
-    |> Helper.wrap_pre(:ok)
+    |> Misc.wrap_pre(:ok)
   end
+
+  def handle_call(:state, _from, state), do: {:reply, state, state}
 
   def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state, board, row_fun}) do
     next_move =
@@ -50,12 +52,6 @@ defmodule TicTacToe.Board do
     end
   end
 
-  def handle_call(:state, _from, state) do
-    state
-    |> Tuple.duplicate(2)
-    |> Tuple.insert_at(0, :reply)
-  end
-
   # helpers v
 
   defmacrop recurse(next_acc_state) do
@@ -74,7 +70,7 @@ defmodule TicTacToe.Board do
       |> Set.delete(var!(move))
       |> case do
         %HashSet{size: ^var!(size)} -> push_next(var!(info))
-        %HashSet{size: 0}           -> {:game_over, var!(token) <> " W I N S !" }
+        %HashSet{size: 0}           -> {:game_over, var!(token) <> " W I N S !"}
         next_win_set                -> push_next({next_win_set, var!(token)})
       end
     end

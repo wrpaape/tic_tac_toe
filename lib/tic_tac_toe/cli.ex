@@ -1,14 +1,15 @@
 defmodule TicTacToe.CLI do
-  alias TicTacToe.Helper
   alias TicTacToe.Board
   alias TicTacToe.Computer
   alias TicTacToe.Player
   
-  @valid_tokens Helper.get_config(:valid_tokens)
-  @min_size     Helper.get_config(:min_size)
-  @max_size     Helper.get_config(:max_size)
-  @def_size     Helper.get_config(:def_size)
-  @blink_cursor Helper.cap_reset("\n > ", :blink_slow)
+  require Misc
+
+  @valid_tokens Misc.get_config(:valid_tokens)
+  @min_size     Misc.get_config(:min_size)
+  @max_size     Misc.get_config(:max_size)
+  @def_size     Misc.get_config(:def_size)
+  @blink_cursor Misc.cap_reset("\n > ", :blink_slow)
   @parse_opts   [
     switches: [help: :boolean],
     aliases:  [h:    :help]
@@ -32,14 +33,14 @@ defmodule TicTacToe.CLI do
 
     {wrap_dir, turn_str} =
       "heads or tails (h/t)?"
-      |> Helper.str_app(@blink_cursor)
+      |> Misc.str_app(@blink_cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
       |> if do: {:a, "first"}, else: {:p, "second"}
 
       turn_str
-      |> Helper.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
-      |> Helper.str_app(@blink_cursor)
+      |> Misc.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
+      |> Misc.str_app(@blink_cursor)
       |> assign_tokens(wrap_dir)
       |> TicTacToe.start
   end
@@ -61,7 +62,7 @@ defmodule TicTacToe.CLI do
   defp coin_flip_reg do
     ~w(h t)
     |> Enum.random
-    |> Helper.str_pre("^")
+    |> Misc.str_pre("^")
     |> Regex.compile!("i")
   end
 
@@ -77,11 +78,11 @@ defmodule TicTacToe.CLI do
       @valid_tokens
       |> Set.delete(token)
       |> Enum.random
-      |> Helper.wrap_pre(Computer)
-      |> Helper.wrap({Player, token}, wrap_dir)
+      |> Misc.wrap_pre(Computer)
+      |> Misc.wrap({Player, token}, wrap_dir)
     else
       "invalid token"
-      |> Helper.cap_reset(:red)
+      |> Misc.cap_reset(:red)
       |> IO.puts
 
       prompt
@@ -91,7 +92,7 @@ defmodule TicTacToe.CLI do
 
   defp alert(msg, color \\ :red) do
     msg   
-    |> Helper.cap_reset(color)
+    |> Misc.cap_reset(color)
     |> IO.puts
 
     System.halt(0)

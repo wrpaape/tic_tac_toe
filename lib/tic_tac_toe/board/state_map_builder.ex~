@@ -1,10 +1,10 @@
 defmodule TicTacToe.Board.StateMapBuilder do
-  alias TicTacToe.Helper
-
+  require Misc
+  
   def build do
     size_range =
       ~w(min_size max_size)a
-      |> Enum.map(&apply(Helper, :get_config, [&1]))
+      |> Enum.map(&apply(Misc, :get_config, [&1]))
 
     Range
     |> apply(:new, size_range)
@@ -22,10 +22,9 @@ defmodule TicTacToe.Board.StateMapBuilder do
         valid_moves
         |> Enum.map(&{&1, Integer.to_string(&1)})
         |> Enum.chunk(size)
-
         
       state_map
-      |> Map.put(size, {valid_moves, board, win_state})
+      |> Map.put(size, {valid_moves, win_state, board})
     end)
   end
 
@@ -43,7 +42,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
         chunk_tup 
         |> Tuple.to_list
         |> Enum.into(HashSet.new)
-        |> Helper.push_in(rows_cols)
+        |> Misc.push_in(rows_cols)
       end)
 
     row_chunks
@@ -52,7 +51,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
       |> Enum.map(fn({diag, at, inc})->
         diag
         |> Set.put(Enum.at(chunk, at)) 
-        |> Helper.wrap_app(at + inc)
+        |> Misc.wrap_app(at + inc)
         |> Tuple.append(inc)
       end)
     end)

@@ -1,17 +1,18 @@
 defmodule TicTacToe.Board do
   use GenServer
   
-  alias TicTacToe.Helper
   alias TicTacToe.Board.Printer
   alias TicTacToe.Board.StateMapBuilder
+
+  require Misc
 
   @state_map StateMapBuilder.build
 
   def start_link(size),      do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
-  def next_move(player_tup), do: GenServer.call({:next_move, player_tup})
-
   def state,                 do: GenServer.call(__MODULE__, :state)
+
+  def next_move(player_tup), do: GenServer.call(__MODULE__, {:next_move, player_tup})
 
   def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
 
@@ -21,8 +22,10 @@ defmodule TicTacToe.Board do
     @state_map
     |> Map.get(size)
     |> Tuple.append(&div(&1 -  1, size))
-    |> Helper.wrap_pre(:ok)
+    |> Misc.wrap_pre(:ok)
   end
+
+  def handle_call(:state, _from, state), do: {:reply, state, state}
 
   def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state, board, row_fun}) do
     next_move =
@@ -48,12 +51,6 @@ defmodule TicTacToe.Board do
       next_win_state -> 
         {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state, next_board, row_fun}}
     end
-  end
-
-  def handle_call(:state, _from, state) do
-    state
-    |> Tuple.duplicate(2)
-    |> Tuple.insert_at(0, :reply)
   end
 
   # helpers v

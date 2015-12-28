@@ -1,7 +1,8 @@
 defmodule TicTacToe do
   alias IO.ANSI
-  alias TicTacToe.Helper
   alias TicTacToe.Board
+
+  require Misc
 
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
@@ -43,12 +44,12 @@ defmodule TicTacToe do
     |> Enum.reduce_while({[], blink_chunks(prompt)}, fn
       (_fun_tup, {final_rev_chars, []})->
         final_rev_chars
-        |> Helper.wrap_pre(:halt)
+        |> Misc.wrap_pre(:halt)
 
       ({color, int}, {rev_chars, [next_char | rem_chars]})->
-        [Helper.cap(color, int, next_char) | rev_chars]
-        |> Helper.wrap_app(rem_chars)
-        |> Helper.wrap_pre(:cont)
+        [Misc.cap(color, int, next_char) | rev_chars]
+        |> Misc.wrap_app(rem_chars)
+        |> Misc.wrap_pre(:cont)
     end)
   end
 
