@@ -1,4 +1,4 @@
-defmodule TicTacToe.Board.MoveMapBuilder do
+defmodule TicTacToe.Board.StateMapBuilder do
   alias TicTacToe.Helper
 
   def build do
@@ -8,24 +8,27 @@ defmodule TicTacToe.Board.MoveMapBuilder do
 
     Range
     |> apply(:new, size_range)
-    |> Enum.reduce(Map.new, fn(size, move_map)->
+    |> Enum.reduce(Map.new, fn(size, state_map)->
       move_list = 
         size
         |> move_list
 
-      row_chunks =
+      valid_moves =
         move_list
+        |> Enum.into(HashSet.new)
+
+      board =
+        move_list
+        |> Enum.map(&{&1, Integer.to_string(&1)})
         |> Enum.chunk(size)
 
-      
-      board_state =
-        row_chunks
+      win_state =
+        move_list
+        |> Enum.chunk(size)
         |> win_sets
-        |> Helper.wrap_app(Enum.map(move_list, &{&1, &1}))
-        |> Tuple.append(Enum.into(move_list, HashSet.new))
-      
-      move_map
-      |> Map.put(size, board_state)
+        
+      state_map
+      |> Map.put(size, {valid_moves, board, win_state})
     end)
   end
 
@@ -64,6 +67,6 @@ defmodule TicTacToe.Board.MoveMapBuilder do
     |> :math.pow(2)
     |> trunc
     |> Range.new(1)
-    |> Enum.reduce([], &[Integer.to_string(&1) | &2])
+    |> Enum.reduce([], &[&1 | &2])
   end
 end

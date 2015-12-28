@@ -1,16 +1,11 @@
 defmodule TicTacToe.Board do
   use GenServer
-
-  alias IO.ANSI
+  
   alias TicTacToe.Helper
-  alias TicTacToe.Player
-  alias TicTacToe.Computer
+  alias TicTacToe.Board.Printer
+  alias TicTacToe.Board.StateMapBuilder
 
-  @move_map __MODULE__
-    |> Module.safe_concat(MoveMapBuilder)
-    |> apply(:build, [])
-
-  @tie_prompt Helper.fun_prompt("C A T ' S   G A M E")
+  @state_map StateMapBuilder.build
 
   def start_link(size),      do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
@@ -23,36 +18,36 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(size) do
-    @move_map
+    @state_map
     |> Map.get(size)
-    |> Tuple.append(size)
+    |> Tuple.append(&div(&1 -  1, size))
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_call({:next_move, {Player, token}}, _from, {win_state, board, valid_moves, size, }) do
+  def handle_call({:next_move, {player, token}}, _from, {valid_moves, board, win_state, row_fun}) do
     next_move =
-      valid_moves
-      |> Player.next_move
+      player
+      |> apply(:next_move, [valid_moves])
       
     next_board =
-      next_move
-      |> update_board(token, board, [])
+      board
+      |> List.update_at(row_fun.(next_move), fn(row)->
+        row
+        |> List.keyreplace_at(next_move, 0, {next_move, token})
+      end)
 
+    next_board
+    |> Printer.print
+
+    next_move
     |> next_win_state(token, win_state)
+    |> case do
+      {:game_over, go_msg} ->
+        {:stop, :shutdown, go_msg, next_board}
 
-      # {:invalid, valid_moves} -> 
-      #   valid_moves
-      #   |> inspect
-      #   |> Helper.cap(@warning, ANSI.reset)
-      #   |> IO.puts
-
-      #   player_tup
-      #   |> next_move(next_turn)
-  end
-
-
-  def handle_call({:next_move, {Computer, token}}, _from, {win_state, board, valid_moves}) do
-
+      next_win_state -> 
+        {:reply, :cont, {Set.delete(valid_moves, next_move), next_board, row_fun, next_win_state}}
+    end
   end
 
   def handle_call(:state, _from, board) do
@@ -63,11 +58,6 @@ defmodule TicTacToe.Board do
 
   # helpers v
 
-  def
-  def update_board(move, token, [next_row | rem_rows], acc_rows) do
-    board
-  end
-  
   defmacrop recurse(next_acc_state) do
     quote do
       next_info(var!(move), var!(token), var!(rem_state), unquote(next_acc_state))
@@ -84,7 +74,7 @@ defmodule TicTacToe.Board do
       |> Set.delete(var!(move))
       |> case do
         %HashSet{size: ^var!(size)} -> push_next(var!(info))
-        %HashSet{size: 0}           -> :win
+        %HashSet{size: 0}           -> {:game_over, var!(token) <> " W I N S !" }
         next_win_set                -> push_next({next_win_set, var!(token)})
       end
     end
@@ -105,7 +95,7 @@ defmodule TicTacToe.Board do
     |> if do: recurse(acc_state), else: push_next(occ_info)
   end
 
-  def next_info(_move, _token, [], []),             do: :tie
+  def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}
   def next_info(_move, _token, [], next_win_state), do: next_win_state
 end
 
