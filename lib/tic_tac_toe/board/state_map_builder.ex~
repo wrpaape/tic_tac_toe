@@ -9,28 +9,23 @@ defmodule TicTacToe.Board.StateMapBuilder do
     Range
     |> apply(:new, size_range)
     |> Enum.reduce(Map.new, fn(size, state_map)->
-      move_list = 
+      valid_moves = 
         size
         |> move_list
 
-      valid_moves =
-        move_list
-        |> Enum.into(HashSet.new)
+      win_state =
+        valid_moves
+        |> Enum.chunk(size)
+        |> win_sets
 
       board =
-        move_list
+        valid_moves
         |> Enum.map(&{&1, Integer.to_string(&1)})
         |> Enum.chunk(size)
 
-      row_fun = &div(&1 - 1, size)
-
-      win_state =
-        move_list
-        |> Enum.chunk(size)
-        |> win_sets
         
       state_map
-      |> Map.put(size, {valid_moves, board, row_fun, win_state})
+      |> Map.put(size, {valid_moves, board, win_state})
     end)
   end
 

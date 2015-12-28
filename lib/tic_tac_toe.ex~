@@ -2,6 +2,7 @@ defmodule TicTacToe do
   alias IO.ANSI
   alias TicTacToe.Helper
   alias TicTacToe.Board
+  alias TicTacToe.Computer
 
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
@@ -13,6 +14,11 @@ defmodule TicTacToe do
   end
 
   # external api ^
+
+  defp next_move(computer_tup = {Computer, _token}, player_tup) do
+
+  end
+
   defp next_move(next_up, on_deck) do
     next_up
     |> Board.next_move

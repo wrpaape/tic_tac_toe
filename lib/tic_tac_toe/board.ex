@@ -24,10 +24,10 @@ defmodule TicTacToe.Board do
     |> Helper.wrap_pre(:ok)
   end
 
-  def handle_call({:next_move, {player, token}}, _from, {valid_moves, board, win_state, row_fun}) do
+  def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state, board, row_fun}) do
     next_move =
       player
-      |> apply(:next_move, [valid_moves])
+      |> apply(:next_move, [valid_moves, win_state])
       
     next_board =
       board
@@ -46,12 +46,12 @@ defmodule TicTacToe.Board do
         {:stop, :shutdown, go_msg, next_board}
 
       next_win_state -> 
-        {:reply, :cont, {Set.delete(valid_moves, next_move), next_board, row_fun, next_win_state}}
+        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state, next_board, row_fun}}
     end
   end
 
-  def handle_call(:state, _from, board) do
-    board
+  def handle_call(:state, _from, state) do
+    state
     |> Tuple.duplicate(2)
     |> Tuple.insert_at(0, :reply)
   end
@@ -74,7 +74,7 @@ defmodule TicTacToe.Board do
       |> Set.delete(var!(move))
       |> case do
         %HashSet{size: ^var!(size)} -> push_next(var!(info))
-        %HashSet{size: 0}           -> {:game_over, var!(token) <> " W I N S !" }
+        %HashSet{size: 0}           -> {:game_over, var!(token) <> " W I N S !"}
         next_win_set                -> push_next({next_win_set, var!(token)})
       end
     end

@@ -23,15 +23,13 @@ defmodule TicTacToe.CLI do
   #external API ^
 
   def process({size, _}) when size in @min_size..@max_size, do: process(size)
-  def process({size, _}), do: alert_and_halt("board size must be an integer >= #{@min_size} and <= #{@max_size}")
-  def process(:help),     do: alert_and_halt("usage: tic_tac_toe <size>", :blue)
-  def process(:error),    do: alert_and_halt("failed to parse size (integer)")
-  def process(size)       do
+  def process({_size, _}), do: alert("board size must be >= #{@min_size} and <= #{@max_size}")
+  def process(:help),      do: alert("usage: tic_tac_toe (<board size>)", :blue)
+  def process(:error),     do: alert("failed to parse integeer from board size")
+  def process(size)        do
     size
     |> Board.start_link
 
-    Computer.start_link
-    
     {wrap_dir, turn_str} =
       "heads or tails (h/t)?"
       |> Helper.str_app(@blink_cursor)
@@ -58,7 +56,7 @@ defmodule TicTacToe.CLI do
     end
   end
 
-  #helpers V
+  #helpers v 
 
   defp coin_flip_reg do
     ~w(h t)
@@ -91,7 +89,7 @@ defmodule TicTacToe.CLI do
     end
   end
 
-  defp alert_and_halt(msg, color \\ :red) do
+  defp alert(msg, color \\ :red) do
     msg   
     |> Helper.cap_reset(color)
     |> IO.puts
