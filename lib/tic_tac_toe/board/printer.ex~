@@ -4,6 +4,7 @@ defmodule TicTacToe.Board.Printer do
   require Misc
   
   @box_chars Misc.box_chars(:thick)
+  @token_space_ratio 8
 
   def start_link(size),   do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
@@ -50,7 +51,29 @@ defmodule TicTacToe.Board.Printer do
       board_res
       |> div(size)
       |> - (size + 1)
-    
+
+    cell_pad_len = 
+      cell_res
+      |> div(@token_space_ratio)
+
+    token_space = ceil_res - cell_pad_len * 2
+
+    lr_pad =
+      cell_pad_len
+      |> Misc.pad
+
+    tb_pad =
+      ceil_res
+      |> Misc.pad
+      |> List.duplicate(pad_len)
+
+    fn(token)->
+      token
+      |> String.duplicate(token_space)
+      |> List.duplicate(token_space)
+      |> Enum.map(&Misc.cap(&1, lr_pad))
+      |> Misc.cap_list(tb_pad)
+    end
   end
 
   defp build_row(cells) do

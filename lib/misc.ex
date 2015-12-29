@@ -18,16 +18,22 @@ defmodule Misc do
   defmacro cap(str, lcap, rcap),   do: quote do: unquote(lcap) <> unquote(str) <> unquote(rcap)
   defmacro cap(str, {lcap, rcap}), do: quote do: unquote(lcap) <> unquote(str) <> unquote(rcap)
   defmacro cap(str, cap),          do: quote do: unquote(cap)  <> unquote(str) <> unquote(cap)
-  
+
+  defmacro cap_list(list, lcap, rcap),   do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
+  defmacro cap_list(list, {lcap, rcap}), do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
+  defmacro cap_list(list, cap),          do: quote do: unquote(cap)  ++ unquote(list) ++ unquote(cap)
+
   defmacro str_pre(rstr, lstr), do: quote do: unquote(lstr) <> unquote(rstr)
   defmacro str_app(lstr, rstr), do: quote do: unquote(lstr) <> unquote(rstr)
 
   defmacro cap_reset(str, fun), do: quote do: unquote(str) <> apply(ANSI, unquote(fun), []) <> ANSI.reset
 
   defmacro dup_str(len, str), do: quote do: String.duplicate(unquote(str), unquote(len))
+  defmacro pad(len),          do: quote do: String.duplicate(" ", unquote(len))
 
   defmacro map_to_tup(col, fun), do: quote do: Enum.map(unquote(col), unquote(fun)) |> List.to_tuple
 
+  defmacro ceil_trunc(float), do: quote do: Float.ceil(quote(float)) |> trunc
   # defmacro apply_wrap_pre(right, left, mod, fun) do
   #   quote do
   #     {apply(unquote(mod), unquote(fun), [unquote(left)]), apply(unquote(mod), unquote(fun), [unquote(right)])}
