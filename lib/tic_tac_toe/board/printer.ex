@@ -45,7 +45,11 @@ defmodule TicTacToe.Board.Printer do
       
   end
 
-  defp build_cell do
+  defp build_cell_builder_fun(board_res, size) do
+    cell_res =
+      board_res
+      |> div(size)
+      |> - (size + 1)
     
   end
 
