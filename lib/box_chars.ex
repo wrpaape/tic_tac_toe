@@ -1,4 +1,13 @@
 defmodule BoxChars do
+  def sigil_b("h", []), do: "─"
+  def sigil_B(string, 'h'), do: "═"
+  def sigil_b(string, 'v'), do: "│"
+  def sigil_B(string, 'v'), do: "║"
+
+  
+  def sigil_b(string, 'v'), do: "│"
+  def sigil_B(string, 'v'), do: "║"
+
   @box_chars %{
     thin:  %{
       lines: %{

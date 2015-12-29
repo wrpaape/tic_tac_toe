@@ -1,4 +1,9 @@
 defmodule BoxChars do
+  def sigil_b(string, 'h'), do: "─"
+  def sigil_B(string, 'h'), do: "═"
+  def sigil_b(string, 'v'), do: "│"
+  def sigil_B(string, 'v'), do: "║"
+
   @box_chars %{
     thin:  %{
       lines: %{
@@ -34,7 +39,7 @@ defmodule BoxChars do
     }
   }
 
-  def get_chars(key_path), do: get_in(box_chars, key_path)
+  def get_chars(key_path), do: get_in(@box_chars, key_path)
 
   def get_config(:grid, thickness) do
     set = Map.get(@box_chars, thickness)
