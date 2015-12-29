@@ -19,9 +19,9 @@ defmodule Misc do
   defmacro cap(str, {lcap, rcap}), do: quote do: unquote(lcap) <> unquote(str) <> unquote(rcap)
   defmacro cap(str, cap),          do: quote do: unquote(cap)  <> unquote(str) <> unquote(cap)
 
-  defmacro cap_list(str, lcap, rcap),   do: quote do: unquote(lcap) <> unquote(str) <> unquote(rcap)
-  defmacro cap_list(str, {lcap, rcap}), do: quote do: unquote(lcap) <> unquote(str) <> unquote(rcap)
-  defmacro cap_list(str, cap),          do: quote do: unquote(cap)  <> unquote(str) <> unquote(cap)
+  defmacro cap_list(list, lcap, rcap),   do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
+  defmacro cap_list(list, {lcap, rcap}), do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
+  defmacro cap_list(list, cap),          do: quote do: unquote(cap)  ++ unquote(list) ++ unquote(cap)
 
   defmacro str_pre(rstr, lstr), do: quote do: unquote(lstr) <> unquote(rstr)
   defmacro str_app(lstr, rstr), do: quote do: unquote(lstr) <> unquote(rstr)

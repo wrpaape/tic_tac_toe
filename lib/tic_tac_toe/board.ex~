@@ -22,7 +22,7 @@ defmodule TicTacToe.Board do
       |> Map.get(size)
 
     size
-    |> Printer.start_link(board)
+    |> Printer.start_link({board_state, board_size})
 
     {:ok, valid_moves, win_state}
   end
@@ -44,7 +44,7 @@ defmodule TicTacToe.Board do
         {:stop, :shutdown, go_msg, next_board}
 
       next_win_state -> 
-        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state, next_board, row_fun}}
+        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}
     end
   end
 

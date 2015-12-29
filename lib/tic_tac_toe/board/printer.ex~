@@ -3,17 +3,30 @@ defmodule TicTacToe.Board.Printer do
 
   require Misc
   
-  @box_chars Misc.box_chars(:thick)
-  @token_space_ratio 8
+  @token_space_ratio Helper.get_config(:token_space_ratio)
+  @border_thickness  Helper.get_config(:border_thickness)
+  @line    Misc.box_chars(@border_thickness, :line)
+  @caps    Misc.box_chars(@border_thickness, :caps)
+  @joiners Misc.box_chars(@border_thickness, :joiners)
 
-  def start_link(size),   do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
+  def start_link(board_tu),   do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
 
   def print(move, token), do: GenServer.cast(__MODULE__, {:print, move, token})
 
   # external API ^
 
-  def init(board, size) do
+  def init({board_state, board_size}) do
     key_dims = {board_res, _outer_pad_len} = fetch_key_dims!
+
+    cell_res =
+      board_res
+      |> calc_cell_res(board_size)
+
+    find_row = fn(move)->
+      move
+      |> - 1
+      |> div(board_size)
+    end
 
     borders_tup =
       key_dims
@@ -21,37 +34,32 @@ defmodule TicTacToe.Board.Printer do
  
     cell_builder =
       board_res
-      |> build_cell_buider_fun(size)
+      |> build_cell_buider_fun(board_size)
 
     rows_map = 
       board
       |> build_rows_map(cell_builder)
      
-    {:ok, size, key_dims, borders_tup, cell_builder, rows_map}
+    {:ok, board_size, key_dims, find_row, borders_tup, cell_builder, rows_map}
   end
 
   # helpers v
 
   defp fetch_key_dims! do
     {rows, cols} = Misc.fetch_dims!
-    board_res = max(rows, cols)
+    board_res = min(rows, cols)
 
     {cols - board_res, board_res}
   end
 
-  defp cell_dims({rows, cols}, size) do
-    res =
-      rows
-      |> max(cols)
-      
+  defp calc_cell_res(board_res, board_size) do
+    board_res
+    |> div(board_size)
+    |> - (board_size + 1)
   end
 
-  defp build_cell_builder_fun(board_res, size) do
-    cell_res =
-      board_res
-      |> div(size)
-      |> - (size + 1)
 
+  defp build_cell_builder_fun(cell_res, board_size) do
     cell_pad_len = 
       cell_res
       |> div(@token_space_ratio)
@@ -83,7 +91,6 @@ defmodule TicTacToe.Board.Printer do
   defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
 
   defp build_lines_tup(board_res) do
-    # horiz_line = Misc.dup_str(board_res, "─")
     horiz_line = String.duplicate(, board_res)
     Misc.map_to_tup(@line_caps, &Misc.cap(horiz_line, &1))
   end
@@ -92,24 +99,14 @@ defmodule TicTacToe.Board.Printer do
     {build_pads_tup(pad_len), build_lines_tup(board_res)}
   end
 
-  defp allocate_dims(cols, size) do
-    &div(&1 -  1, size)
-    next_board =
-      board
-      |> List.update_at(row_fun.(next_move), fn(row)->
-        row
-        |> List.keyreplace_at(next_move, 0, {next_move, token})
-      end)
+  # defp allocate_dims(cols, board_size) do
+  #   &div(&1 -  1, board_size)
+  #   next_board =
+  #     board
+  #     |> List.update_at(row_fun.(next_move), fn(row)->
+  #       row
+  #       |> List.keyreplace_at(next_move, 0, {next_move, token})
+  #     end)
     
-  end
-
-  # defp fetch_dims!, do: Enum.map(~w(rows columns)a, &elem(apply(:io, dim, []), 1))
-  
-  defp outer_pads(rem_cols) do
-    lpad_len = div(rem_cols, 2)
-    lpad_len = div(rem_cols, 2)
-
-    {}
-  end
-
+  # end
 end

@@ -1,8 +1,8 @@
 defmodule Misc do
   alias IO.ANSI
 
-  @box_chars [thin:  [caps: [{"╔", "╗"}, {"╠", "╣"}, {"╚", "╝"}], line: "═", joiners: ["╦", "╬", "╩"]],
-              thick: [caps: [{"┌", "┐"}, {"├", "┤"}, {"└", "┘"}], line: "─", joiners: ["┬", "┼", "┴"]]]
+  @box_chars [thin:  [line: "═", joiners: ["╦", "╬", "╩"], caps: [{"╔", "╗"}, {"╠", "╣"}, {"╚", "╝"}]],
+              thick: [line: "─", joiners: ["┬", "┼", "┴"], caps: [{"┌", "┐"}, {"├", "┤"}, {"└", "┘"}]]]
 
   # defmacro if_else_tap(bool, if_exp, else_exp) do
   #   quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)

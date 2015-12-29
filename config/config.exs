@@ -14,9 +14,11 @@ valid_tokens =
   |> Enum.into(HashSet.new)
 
 config :tic_tac_toe, [
-  min_size: 1,
-  max_size: 4,
-  def_size: 3,
+  min_board_size: 1,
+  max_board_size: 4,
+  def_board_size: 3,
+  border_thickness: :thick,
+  token_space_ratio: 8,
   valid_tokens: valid_tokens
 ]
 

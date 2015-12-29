@@ -5,12 +5,12 @@ defmodule TicTacToe.CLI do
   
   require Misc
 
-  @valid_tokens Misc.get_config(:valid_tokens)
-  @min_size     Misc.get_config(:min_size)
-  @max_size     Misc.get_config(:max_size)
-  @def_size     Misc.get_config(:def_size)
-  @blink_cursor Misc.cap_reset("\n > ", :blink_slow)
-  @parse_opts   [
+  @valids Misc.get_config(:valid_tokens)
+  @min    Misc.get_config(:min_board_size)
+  @max    Misc.get_config(:max_board_size)
+  @def    Misc.get_config(:def_board_size)
+  @cursor Misc.cap_reset("\n > ", :blink_slow)
+  @parse_opts [
     switches: [help: :boolean],
     aliases:  [h:    :help]
   ]
@@ -23,24 +23,24 @@ defmodule TicTacToe.CLI do
 
   #external API ^
 
-  def process({size, __}) when size in @min_size..@max_size, do: process(size)
-  def process({_size, _}), do: alert("board size must be >= #{@min_size} and <= #{@max_size}")
-  def process(:error),     do: alert("failed to parse integeer from board size")
-  def process(:help),      do: alert("usage: tic_tac_toe (<board size>)", :blue)
-  def process(size)        do
-    size
+  def process({board_size, __}) when board_size in @min..@max, do: process(board_size)
+  def process({_board_size, _}), do: alert("board size must be >= #{@min} and <= #{@max}")
+  def process(:error),           do: alert("failed to parse integeer from board size")
+  def process(:help),            do: alert("usage: tic_tac_toe (<board size>)", :blue)
+  def process(board_size)        do
+    board_size
     |> Board.start_link
 
     {wrap_dir, turn_str} =
       "heads or tails (h/t)?"
-      |> Misc.str_app(@blink_cursor)
+      |> Misc.str_app(@cursor)
       |> IO.gets
       |> String.match?(coin_flip_reg)
       |> if do: {:app, "first"}, else: {:pre, "second"}
 
     turn_str
     |> Misc.cap("you will have the ", " move.\nchoose a valid (not whitespace or a number) token character")
-    |> Misc.str_app(@blink_cursor)
+    |> Misc.str_app(@cursor)
     |> assign_tokens(wrap_dir)
     |> TicTacToe.start
   end
@@ -51,7 +51,7 @@ defmodule TicTacToe.CLI do
     |> case do
       {[help: true], _, _ }  -> :help
        
-      {_, [], _}             -> @def_size
+      {_, [], _}             -> @def
  
       {_, [size_str | _], _} -> Integer.parse(size_str)
     end
@@ -72,10 +72,10 @@ defmodule TicTacToe.CLI do
       |> IO.gets
       |> String.first
 
-    @valid_tokens
+    @valids
     |> Set.member?(token)
     |> if do
-      @valid_tokens
+      @valids
       |> Set.delete(token)
       |> Enum.random
       |> Misc.wrap_pre(Computer)
