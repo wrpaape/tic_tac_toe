@@ -1,9 +1,6 @@
 defmodule Misc do
   alias IO.ANSI
 
-  @box_chars [thin:  [caps: [{"╔", "╗"}, {"╠", "╣"}, {"╚", "╝"}], line: "═", joiners: ["╦", "╬", "╩"]],
-              thick: [caps: [{"┌", "┐"}, {"├", "┤"}, {"└", "┘"}], line: "─", joiners: ["┬", "┼", "┴"]]]
-
   # defmacro if_else_tap(bool, if_exp, else_exp) do
   #   quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
   # end
@@ -45,8 +42,6 @@ defmodule Misc do
   #     {apply(unquote(mod), unquote(fun), [unquote(left)]), apply(unquote(mod), unquote(fun), [unquote(right)])}
   #   end
   # end
-  defmacro box_chars(set),       do: quote do: Keyword.get(@box_chars, unquote(set))
-  defmacro box_chars(set, type), do: quote do: get_in(@box_chars, [unquote(set), unquote(type)])
 
   defmacro split_pads(len) do
     quote do

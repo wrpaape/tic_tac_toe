@@ -2,12 +2,13 @@ defmodule TicTacToe.Board.Printer do
   use GenServer
 
   require Misc
+  require BoxChars
   
   @token_space_ratio Helper.get_config(:token_space_ratio)
   @border_thickness  Helper.get_config(:border_thickness)
-  @line    Misc.box_chars(@border_thickness, :line)
-  @caps    Misc.box_chars(@border_thickness, :caps)
-  @joiners Misc.box_chars(@border_thickness, :joiners)
+  @line    BoxChars.get(@border_thickness, :line)
+  @caps    BoxChars.get(@border_thickness, :caps)
+  @joiners BoxChars.get(@border_thickness, :joiners)
 
   def start_link(board_tup),   do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
 
@@ -58,7 +59,6 @@ defmodule TicTacToe.Board.Printer do
     |> - (board_size + 1)
   end
 
-
   defp build_cell_builder_fun(cell_res, board_size) do
     cell_pad_len = 
       cell_res
@@ -82,10 +82,6 @@ defmodule TicTacToe.Board.Printer do
       |> Enum.map(&Misc.cap(&1, lr_pad))
       |> Misc.cap_list(tb_pad)
     end
-  end
-
-  defp build_row(cells) do
-    
   end
 
   defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
