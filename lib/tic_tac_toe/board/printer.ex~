@@ -3,30 +3,30 @@ defmodule TicTacToe.Board.Printer do
 
   require Misc
   
-  @line_caps [{"┌", "┐"}, {"├", "┤"}, {"└", "┘"}]
+  @box_chars Misc.box_chars(:thick)
 
-  def start_link(size), do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
+  def start_link(size),   do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
 
-  def print(move, token),     do: GenServer.cast(__MODULE__, {:print, move, token})
+  def print(move, token), do: GenServer.cast(__MODULE__, {:print, move, token})
 
   # external API ^
 
   def init(board, size) do
     key_dims = {board_res, _outer_pad_len} = fetch_key_dims!
 
-    cell_dims =
+    borders_tup =
+      key_dims
+      |> build_static_pieces
+ 
+    cell_builder =
       board_res
-      |> calc_cell_dims(size)
+      |> build_cell_buider_fun(size)
 
     rows_map = 
       board
-      |> build_rows_map(cell_dims)
-
-    statics_tup =
-      key_dims
-      |> build_static_pieces
-      
-    {:ok, size, dims, allocated_dims}
+      |> build_rows_map(cell_builder)
+     
+    {:ok, size, key_dims, borders_tup, cell_builder, rows_map}
   end
 
   # helpers v
@@ -57,7 +57,7 @@ defmodule TicTacToe.Board.Printer do
 
   defp build_lines_tup(board_res) do
     # horiz_line = Misc.dup_str(board_res, "─")
-    horiz_line = String.duplicate("─", board_res)
+    horiz_line = String.duplicate(, board_res)
     Misc.map_to_tup(@line_caps, &Misc.cap(horiz_line, &1))
   end
 
