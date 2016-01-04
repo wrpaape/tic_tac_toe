@@ -11,6 +11,8 @@ defmodule TicTacToe.Board.Printer do
   @token_space_ratio 8
 
   def start_link(board_tup), do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
+  
+  def state, do: GenServer.call(__MODULE__, :state)
 
   # def print(move, token),    do: GenServer.cast(__MODULE__, {:print, move, token})
 
@@ -38,11 +40,13 @@ defmodule TicTacToe.Board.Printer do
       |> build_cell_builder_fun(cell_res)
 
     # rows_map = 
-    #   board
+    #   board_state
     #   |> build_rows_map(cell_builder)
      
     {:ok, {board_size, key_dims, find_row, lines_pads_tup, cell_builder, []}}
   end
+
+  def handle_call(:state, _from, state), do: {:reply, state, state}
 
   # helpers v
 

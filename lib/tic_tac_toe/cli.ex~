@@ -90,7 +90,7 @@ defmodule TicTacToe.CLI do
     end
   end
 
-  defmacrop alert(msg, color \\ :red) do
+  defp alert(msg, color \\ :red) do
     msg   
     |> Misc.cap_reset(color)
     |> IO.puts

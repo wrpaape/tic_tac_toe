@@ -17,7 +17,7 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(board_size) do
-    {valid_moves, win_state, board} =
+    {valid_moves, win_state, board_state} =
       @state_map
       |> Map.get(board_size)
 
@@ -28,7 +28,7 @@ defmodule TicTacToe.Board do
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_call({:next_move, {player, token}}, _from, {valid_moves, win_state}) do
+  def handle_call({:next_move, {player, token}}, _from, state = {valid_moves, win_state}) do
     next_move =
       player
       |> apply(:next_move, [valid_moves, win_state])
@@ -40,7 +40,7 @@ defmodule TicTacToe.Board do
     |> next_win_state(token, win_state)
     |> case do
       {:game_over, go_msg} ->
-        {:stop, :shutdown, go_msg, next_board}
+        {:stop, :shutdown, go_msg, state}
 
       next_win_state -> 
         {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}
