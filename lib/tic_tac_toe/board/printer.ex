@@ -40,65 +40,104 @@ defmodule TicTacToe.Board.Printer do
       move_cells
       |> build_board(board_size, cell_builder, row_caps)
 
-    # dims = Map.new
-    #   |> Map.put(:b_size, board_size)
-    #   |> Map.put(:b_res,  board_res)
-    #   |> Map.put(:cols,   cols)
-    #   |> Map.put(:c_res,  cell_res)
-    #   |> Map.put(:p_len,  outer_pad_len)
+    board
+    |> print_board(lines)
 
-    # {:ok, {board_size, move_map, key_dims, lines_caps, cell_builder, board}}
     {:ok, {board_size, move_map, board_res, cols, lines, row_caps, cell_builder, board}}
-
-
-    # {:ok, {dims, statics, cell_builder, board, move_map}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
   def handle_cast({:print, move, token}, {b_size, moves, b_res, cols, lines, caps, c_fun, board}) do
-    # fetch_key_dims!
-    # |> case do
-    #   {^dims.b_res, ^dims.cols} ->
-    #     board
-    #     |> update_board(moves[move], c_fun.(token))
+    next_board = 
+      fetch_key_dims!
+      |> case do
+        # {^b_res, ^cols} ->
+          _ ->
+            board
+            |> update_board(moves[move], c_fun.(token), caps)
 
-    #   {b_res, ^dims.cols} ->
+        # {b_res, ^cols} ->
 
 
-    #   {^dims.b_res, cols} ->
+        # {^b_res, cols} ->
 
 
-    #   {b_res, cols} ->
+        # {b_res, cols} ->
 
-    # end
+      end
 
-    {:noreply, nil}
+      next_board
+      |> print_board(lines)
+
+    {:noreply, {b_size, moves, b_res, cols, lines, caps, c_fun, next_board}}
   end
 
   # helpers v
 
-  defp update_board(board, {row, col}, cell), do: Keyword.update!(board, row, &update_row(&1, col, cell))
+  defp print_board(board, {mid, top_bot}) do
+    board
+    |> Enum.map_join(mid, fn({_, {_, _, row}})->
+      row
+    end)
+    |> Misc.cap(top_bot)
+    |> IO.write
+  end
 
-  defp update_row({free_cells, cells, _row}) do
+  defp update_board(board, {row, col}, cell, caps) do
+    board
+    |> Keyword.update!(row, &update_row(&1, col, cell, caps))
+  end
+
+  defp update_row({num_free, cells, _row}, col, cell, caps) do
+    {next_cells, next_cell_vals} =
+      cells
+      |> update_and_unzip(col, cell, Keyword.new, [])
+
+    next_row =
+      next_cell_vals
+      |> print_row(caps, "")
+
+    num_free
+    |> - 1
+    |> case do
+      0        -> next_row
+      next_num -> {next_num, next_cells, next_row}
+    end
+  end
+
+  defp update_and_unzip([{col, _} | rem_cells], col, cell, acc_cells, acc_vals) do
+    rem_vals =
+      rem_cells
+      |> Keyword.values
+
+    [{col, cell} | acc_cells]
+    |> Enum.reverse(rem_cells)
+    |> Misc.wrap_app(Enum.reverse([cell | acc_vals], rem_vals))
+  end
+
+  defp update_and_unzip([tup = {_, val} | rem_cells], col, cell, acc_cells, acc_vals) do
+    rem_cells
+    |> update_and_unzip(col, cell, [tup | acc_cells], [val | acc_vals])
   end
 
   defp build_board(move_cells, board_size, cell_builder, row_caps) do
     move_cells
     |> Enum.map(fn({row_key, row}) ->
-      {cells_kw, cells} =
-        row
-        |> Enum.map_reduce([], fn({col_key, cell_move}, acc_cells)->
+      {cells, cell_vals} =
+        fn({col_key, cell_move}, acc_cells)->
           cell = cell_builder.(cell_move)
+
           {{col_key, cell}, [cell | acc_cells]}
-        end)
+        end
+        |> :lists.mapfoldr([], row)
       
-      {row_key, {board_size, cells_kw, build_row(cells, row_caps, "")}}
+      {row_key, {board_size, cells, print_row(cell_vals, row_caps, "")}}
     end)
   end
 
-  defp build_row([[] | _], _, acc_row),               do: acc_row
-  defp build_row(cells, caps = {lcap, rcap}, acc_row) do
+  defp print_row([[] | _], _, acc_row),               do: acc_row
+  defp print_row(cells, caps = {lcap, rcap}, acc_row) do
     {next_cells, cell_row} =
       cells
       |> Enum.map_reduce(lcap, fn([next_cell_row | rem_cell_rows], acc_cell_row)->
@@ -106,7 +145,7 @@ defmodule TicTacToe.Board.Printer do
       end)
 
     next_cells
-    |> build_row(caps, acc_row <> cell_row <> rcap)
+    |> print_row(caps, acc_row <> cell_row <> rcap)
   end
 
   defp fetch_key_dims! do
