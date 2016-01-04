@@ -5,6 +5,9 @@ defmodule Misc do
   #   quote do: if unquote(bool), do: unquote(if_exp), else: unquote(else_exp)
   # end
 
+  defmacrop div_rem_two(nmr), do: quote do: {div(unquote(nmr), 2), rem(unquote(nmr), 2)} 
+  defmacrop pad_wrap(left, right), do: quote do: {pad(unquote(left)), pad(unquote(right))}
+
   defmacro get_config(key), do: quote do: Application.get_env(:tic_tac_toe, unquote(key))
 
   defmacro wrap_pre(right, left), do: quote do: {unquote(left), unquote(right)}
@@ -46,21 +49,22 @@ defmodule Misc do
   defmacro split_pads(len) do
     quote do
       pad_len = div(len, 2)
-      pad_wrap(pad_len, pad_len)
+      unquote(pad_wrap)(pad_len, pad_len)
     end
   end
 
   defmacro ljust_pads(len) do
     quote do
-      {lpad_len, rem_len} = div_rem(unquote(len), 2)
-      pad_wrap(lpad_len, lpad_len + rem_len)
+      # {lpad_len, rem_len} = unquote(__MODULE__).div_rem_two(unquote(len))
+      {lpad_len, rem_len} = unquote(div_rem_two(len))
+      unquote(pad_wrap)(lpad_len, lpad_len + rem_len)
     end
   end
 
   defmacro riust_pads(len) do
     quote do
-      {rpad_len, rem_len} = div_rem(unquote(len), 2)
-      pad_wrap(rpad_len, rpad_len + rem_len)
+      {rpad_len, rem_len} = unquote(__MODULE__).div_rem_two(unquote(len))
+      unquote(pad_wrap)(rpad_len, rpad_len + rem_len)
     end
   end
 
@@ -75,11 +79,9 @@ defmodule Misc do
 
   # defmacrop pad(len), do: quote do: dup_str(unquote(len), " ")
 
-  defmacrop div_rem_two(nmr), do: quote do: {div(unquote(nmr), 2), rem(unquote(nmr), 2)} 
 
-  defmacrop pad(len), do: quote do: String.duplicate(" ", unquote(len))
+  # defmacrop pad(len), do: quote do: String.duplicate(" ", unquote(len))
 
-  defmacrop pad_wrap(left, right), do: quote do: {pad(unquote(left)), pad(unquote(right))}
 
   # defmacrop div_rem(nmr, dvr), do: quote do: {div(unquote(nmr), unquote(dvr)), rem(unquote(nmr), unquote(dvr))}
 end

@@ -6,7 +6,7 @@ defmodule TicTacToe.Board do
 
   @state_map StateMapBuilder.build
 
-  def start_link(size),      do: GenServer.start_link(__MODULE__, size, name: __MODULE__)
+  def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 
   def state,                 do: GenServer.call(__MODULE__, :state)
 
@@ -16,13 +16,12 @@ defmodule TicTacToe.Board do
 
   # external API ^
   
-  def init(size) do
+  def init(board_size) do
     {valid_moves, win_state, board} =
       @state_map
-      |> Map.get(size)
+      |> Map.get(board_size)
 
-    size
-    |> Printer.start_link({board_state, board_size})
+    Printer.start_link({board_state, board_size})
 
     {:ok, valid_moves, win_state}
   end

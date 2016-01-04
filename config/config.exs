@@ -17,8 +17,8 @@ config :tic_tac_toe, [
   min_board_size: 1,
   max_board_size: 4,
   def_board_size: 3,
-  border_thickness: :thick,
-  token_space_ratio: 8,
+  # border_thickness: :thick,
+  # token_space_ratio: 8,
   valid_tokens: valid_tokens
 ]
 

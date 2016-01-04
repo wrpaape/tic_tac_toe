@@ -6,11 +6,11 @@ defmodule TicTacToe.Board do
 
   @state_map StateMapBuilder.build
 
-  def start_link(board_size),      do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
+  def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 
-  def state,                 do: GenServer.call(__MODULE__, :state)
+  def state,                  do: GenServer.call(__MODULE__, :state)
 
-  def next_move(player_tup), do: GenServer.call(__MODULE__, {:next_move, player_tup})
+  def next_move(player_tup),  do: GenServer.call(__MODULE__, {:next_move, player_tup})
 
   def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
 
