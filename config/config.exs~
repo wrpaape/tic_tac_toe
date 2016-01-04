@@ -13,13 +13,24 @@ valid_tokens =
   end)
   |> Enum.into(HashSet.new)
 
-config :tic_tac_toe, [
-  min_board_size: 1,
-  max_board_size: 4,
-  def_board_size: 3,
-  # border_thickness: :thick,
-   # token_space_ratio: 8,
-  valid_tokens: valid_tokens
+  move_lists = %{
+    1: ~w(1),
+    2: ~w(1 2
+          q w),
+    3: ~w(1 2 3
+          q w e
+          a s d),
+    4: ~w(1 2 3 4
+          q w e r
+          a s d f
+          z x c v)
+  }
+
+config :tic_tac_toe, [min_board_size: 1,
+                      max_board_size: 4,
+                      def_board_size: 3,
+                      move_lists:     move_lists,
+                      valid_tokens:   valid_tokens
 ]
 
 # This configuration is loaded before any dependency and is restricted

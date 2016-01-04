@@ -1,28 +1,42 @@
 defmodule TicTacToe.Board.StateMapBuilder do
   require Misc
-  
+
   @min_board_size Misc.get_config(:min_board_size)
   @max_board_size Misc.get_config(:max_board_size)
-  
+  @move_lists     Misc.get_config(:move_lists)
+
   def build do
     @min_board_size..@max_board_size
     |> Enum.reduce(Map.new, fn(board_size, state_map)->
       valid_moves = 
-        board_size
-        |> move_list
+        move_lists
+        |> Map.get(board_size, move_list(board_size))
+
+      row_chunks =
+        valid_moves
+        |> Enum.chunk(board_size)
 
       win_state =
-        valid_moves
-        |> Enum.chunk(board_size)
+        row_chunks
         |> win_sets
 
-      board =
-        valid_moves
-        |> Enum.map(&{&1, Integer.to_string(&1)})
-        |> Enum.chunk(board_size)
-        
+
+      move_map =
+        row_chunks
+        |> Enum.reduce({Map.new, 0}, fn(row_moves, {move_map, row_index})->
+          row_moves
+          |> Enum.reduce({move_map, 0}, fn(move, {move_map, col_index})->
+            move_map
+            |> Map.put(move, {row_index, col_index})
+            |> Misc.wrap_app(col_index + 1)
+          end)
+          |> elem(0)
+          |> Misc.wrap_app(row_index + 1)
+        end)
+        |> elem(0)
+
       state_map
-      |> Map.put(board_size, {valid_moves, win_state, board})
+      |> Map.put(board_size, {valid_moves, win_state, move_map})
     end)
   end
 
@@ -32,7 +46,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
     rows =
       row_chunks
       |> Enum.map(&Enum.into(&1, HashSet.new))
-      
+
     rows_cols =
       row_chunks
       |> List.zip

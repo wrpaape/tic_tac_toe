@@ -17,11 +17,12 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(board_size) do
-    {valid_moves, win_state, board_state} =
+    {valid_moves, win_state, move_map} =
       @state_map
       |> Map.get(board_size)
 
-    Printer.start_link({board_state, board_size})
+    {valid_moves, move_map, board_size}
+    |> Printer.start_link
 
     {:ok, valid_moves, win_state}
   end

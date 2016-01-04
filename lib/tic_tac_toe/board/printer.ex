@@ -18,18 +18,12 @@ defmodule TicTacToe.Board.Printer do
 
   # external API ^
 
-  def init({board_state, board_size}) do
+  def init({valid_moves, move_map, board_size}) do
     key_dims = {board_res, outer_pad_len} = fetch_key_dims!
 
     cell_res =
       board_size
       |> calc_cell_res(board_res)
-
-    find_row = fn(move)->
-      move
-      |> - 1
-      |> div(board_size)
-    end
 
     lines_pads_tup =
       board_size
@@ -39,22 +33,31 @@ defmodule TicTacToe.Board.Printer do
       board_size
       |> build_cell_builder_fun(cell_res)
 
-    # rows_map = 
-    #   board_state
-    #   |> build_rows_map(cell_builder)
+    rows_map = 
+      move_map
+      |> Enum.chunk(board_size)
+      |> build_rows_map(cell_builder)
+
      
-    {:ok, {board_size, key_dims, find_row, lines_pads_tup, cell_builder, []}}
+    {:ok, {board_size, key_dims, move_map, lines_pads_tup, cell_builder, rows_map}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
+
   # helpers v
+
+  defp build_rows_map(board_rows, cell_builder) do
+    board_rows
+    |> Enum.map_reduce()
+
+  end
 
   defp fetch_key_dims! do
     {rows, cols} = Misc.fetch_dims!
     board_res = min(rows, cols)
 
-    {cols - board_res, board_res}
+    {board_res, cols - board_res}
   end
 
   defp calc_cell_res(board_size, board_res) do
@@ -80,11 +83,11 @@ defmodule TicTacToe.Board.Printer do
       |> List.duplicate(cell_pad_len)
 
     fn(token)->
-      token
-      |> String.duplicate(token_space)
-      |> List.duplicate(token_space)
-      |> Enum.map(&Misc.cap(&1, lr_pad))
-      |> Misc.cap_list(tb_pad)
+        token
+        |> String.duplicate(token_space)
+        |> List.duplicate(token_space)
+        |> Enum.map(&Misc.cap(&1, lr_pad))
+        |> Misc.cap_list(tb_pad)
     end
   end
 
