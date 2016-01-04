@@ -2,6 +2,9 @@ defmodule TicTacToe.Board.Printer do
   use GenServer
 
   require Misc
+
+  alias IO.ANSI
+
   # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
   # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
   # ├──┼──┤   ┣━━╋━━┫   ╠══╬══╣ 
@@ -9,6 +12,9 @@ defmodule TicTacToe.Board.Printer do
   # └──┴──┘   ┗━━┻━━┛   ╚══╩══╝ 
 
   @token_space_ratio 8
+  @board_fg          ANSI.normal <> ANSI.white_background <> ANSI.black
+  @board_bg          ANSI.black_background
+  @cell_join         @board_fg <> "║"
 
   def start_link(board_tup), do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
   
@@ -126,7 +132,7 @@ defmodule TicTacToe.Board.Printer do
     |> Enum.map(fn({row_key, row}) ->
       {cells, cell_vals} =
         fn({col_key, cell_move}, acc_cells)->
-          cell = cell_builder.(cell_move)
+          cell = cell_builder.({ANSI.faint, cell_move})
 
           {{col_key, cell}, [cell | acc_cells]}
         end
@@ -141,7 +147,7 @@ defmodule TicTacToe.Board.Printer do
     {next_cells, cell_row} =
       cells
       |> Enum.map_reduce(lcap, fn([next_cell_row | rem_cell_rows], acc_cell_row)->
-       {rem_cell_rows, acc_cell_row <> next_cell_row <> "║"}
+       {rem_cell_rows, acc_cell_row <> next_cell_row <> @cell_join}
       end)
 
     next_cells
@@ -179,9 +185,10 @@ defmodule TicTacToe.Board.Printer do
       |> Misc.pad
       |> List.duplicate(cell_pad_len)
 
-    fn(token)->
-      token
+    fn({color, char})->
+      char
       |> String.duplicate(token_space)
+      |> Misc.cap(color, @board_fg)
       |> List.duplicate(token_space)
       |> Enum.map(&Misc.cap(&1, lr_pad))
       |> Misc.cap_list(tb_pad)
@@ -197,6 +204,7 @@ defmodule TicTacToe.Board.Printer do
         horiz_lines
         |> Enum.join(join)
         |> Misc.cap(caps)
+        |> Misc.cap(@board_fg, @board_bg)
         |> Misc.cap(pads_tup)
       end)
 
@@ -213,7 +221,7 @@ defmodule TicTacToe.Board.Printer do
     |> String.duplicate(cell_res)
     |> List.duplicate(board_size)
     |> build_lines(pads_tup)
-    |> Misc.wrap_app({lpad <> "║", rpad})
+    |> Misc.wrap_app({lpad <> @cell_join , @board_bg <> rpad})
   end
   # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
   # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
