@@ -115,14 +115,13 @@ defmodule TicTacToe.Board.Printer do
 
   defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
 
-  defp build_lines(horiz_lines, num_mids, pads_tup) do
-    [{1, "╦", {"╔", "╗"}}, {num_mids, "╬", {"╠", "╣"}}, {1, "╩", {"╚", "╝"}}]
-    |> Enum.flat_map(fn({num_lines, join, caps})->
+  defp build_lines(horiz_lines, pads_tup) do
+    [{"╦", {"╔", "╗"}}, {"╬", {"╠", "╣"}}, {"╩", {"╚", "╝"}}]
+    |> Enum.map(fn({join, caps})->
       horiz_lines
       |> Enum.join(join)
       |> Misc.cap(caps)
       |> Misc.cap(pads_tup)
-      |> List.duplicate(num_lines)
     end)
   end
 
@@ -135,7 +134,7 @@ defmodule TicTacToe.Board.Printer do
     "═"
     |> String.duplicate(cell_res)
     |> List.duplicate(board_size)
-    |> build_lines(board_size - 1, pads_tup)
+    |> build_lines(pads_tup)
     |> Misc.wrap_app({lpad <> "║", rpad})
   end
   # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
