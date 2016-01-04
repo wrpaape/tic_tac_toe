@@ -8,8 +8,8 @@ defmodule TicTacToe.Board.StateMapBuilder do
   def build do
     @min_board_size..@max_board_size
     |> Enum.reduce(Map.new, fn(board_size, state_map)->
-      valid_moves = 
-        move_lists
+      valid_moves =
+        @move_lists
         |> Map.get(board_size, move_list(board_size))
 
       row_chunks =
@@ -20,27 +20,51 @@ defmodule TicTacToe.Board.StateMapBuilder do
         row_chunks
         |> win_sets
 
-
-      move_map =
+      {move_map, move_cells} =
         row_chunks
-        |> Enum.reduce({Map.new, 0}, fn(row_moves, {move_map, row_index})->
-          row_moves
-          |> Enum.reduce({move_map, 0}, fn(move, {move_map, col_index})->
-            move_map
-            |> Map.put(move, {row_index, col_index})
-            |> Misc.wrap_app(col_index + 1)
-          end)
-          |> elem(0)
-          |> Misc.wrap_app(row_index + 1)
-        end)
-        |> elem(0)
+        |> printer_tup
 
       state_map
-      |> Map.put(board_size, {valid_moves, win_state, move_map})
+      |> Map.put(board_size, {valid_moves, win_state, move_map, move_cells})
     end)
   end
 
   #external API ^
+
+  def printer_tup(row_chunks) do
+    row_chunks
+    |> Enum.reduce({Map.new, Keyword.new, 0}, fn(row_moves, {move_map, move_cells, row_index})->
+      row_key =
+       "row_" 
+        <> Integer.to_string(row_index)
+        |> String.to_atom
+
+      move_cells =
+        move_cells
+        |> Keyword.put(row_key, Keyword.new)
+
+      row_moves
+      |> Enum.reduce({move_map, move_cells, 0}, fn(move, {move_map, move_cells, col_index})->
+        col_key =
+         "col_" 
+          <> Integer.to_string(col_index)
+          |> String.to_atom
+
+        move_map = 
+          move_map
+          |> Map.put(move, {row_key, col_key})
+
+        move_cells =
+          move_cells
+          |> Keyword.update!(row_key, &Keyword.put(&1, col_key, move))
+
+        {move_map, move_cells, col_index + 1}
+      end)
+      |> Tuple.delete_at(2)
+      |> Tuple.append(row_index + 1)
+    end)
+    |> Tuple.delete_at(2)
+  end
 
   def win_sets(row_chunks) do
     rows =

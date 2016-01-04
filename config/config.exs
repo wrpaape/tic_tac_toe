@@ -11,27 +11,23 @@ valid_tokens =
     String.printable?(char)       and
     String.match?(char, ~r/[^\p{Z}\p{C}0-9]/)
   end)
-  |> Enum.into(HashSet.new)
 
-  move_lists = %{
-    1: ~w(1),
-    2: ~w(1 2
-          q w),
-    3: ~w(1 2 3
-          q w e
-          a s d),
-    4: ~w(1 2 3 4
-          q w e r
-          a s d f
-          z x c v)
-  }
+  move_lists = [{1, ~w(1)},
+                {2, ~w(1 2
+                       q w)},
+                {3, ~w(1 2 3
+                       q w e
+                       a s d)},
+                {4, ~w(1 2 3 4
+                       q w e r
+                       a s d f
+                       z x c v)}]
 
 config :tic_tac_toe, [min_board_size: 1,
                       max_board_size: 4,
                       def_board_size: 3,
-                      move_lists:     move_lists,
-                      valid_tokens:   valid_tokens
-]
+                      move_lists:   Enum.into(move_lists,   Map.new),
+                      valid_tokens: Enum.into(valid_tokens, HashSet.new)]
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
