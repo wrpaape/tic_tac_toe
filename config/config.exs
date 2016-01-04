@@ -2,32 +2,68 @@
 # and its dependencies with the aid of the Mix.Config module.
 use Mix.Config
 
+alias IO.ANSI
 
-valid_tokens =
+initial_valids =
   0x00400..0x3ffff
   |> Enum.map(&<<&1 :: 16>>)
   |> Enum.filter(fn(char)->
     String.valid_character?(char) and
     String.printable?(char)       and
-    String.match?(char, ~r/[^\p{Z}\p{C}0-9]/)
+    String.match?(char, ~r/[^\p{Z}\p{C}]/)
+  end)
+  |> Enum.into(HashSet.new)
+
+move_lists = [{1, ~w(1)},
+              {2, ~w(1 2
+                     q w)},
+              {3, ~w(1 2 3
+                     q w e
+                     a s d)},
+              {4, ~w(1 2 3 4
+                     q w e r
+                     a s d f
+                     z x c v)}]
+move_sets =
+  move_lists
+  |> Enum.map(fn({board_size, move_list})->
+    lines =
+      "─"
+      |> String.duplicate(5)
+      |> List.duplicate(board_size)
+
+    top = "\n  ┌" <> Enum.join(lines, "┬") <> "┐"
+    mid = "\n  ├" <> Enum.join(lines, "┼") <> "┤"
+    bot = "\n  └" <> Enum.join(lines, "┴") <> "┘"
+
+    body =
+      move_list
+      |> Enum.map(&inspect/1)
+      |> Enum.chunk(board_size)
+      |> Enum.map_join(mid, fn(row)->
+        "\n  │ " <> Enum.join(row, " │ ") <> " │"
+      end)
+
+    valids =
+      initial_valids
+      |> Set.difference(Enum.into(move_list, HashSet.new))
+
+    {board_size, {valids, top <> body <> bot <> "\n"}}
   end)
 
-  move_lists = [{1, ~w(1)},
-                {2, ~w(1 2
-                       q w)},
-                {3, ~w(1 2 3
-                       q w e
-                       a s d)},
-                {4, ~w(1 2 3 4
-                       q w e r
-                       a s d f
-                       z x c v)}]
+token_colors =
+  ~w(red green yellow blue cyan magenta yellow black)a
+  |> Enum.map(fn(color)->
+    ANSI.bright <> apply(ANSI, color, [])
+  end)
+
 
 config :tic_tac_toe, [min_board_size: 1,
                       max_board_size: 4,
                       def_board_size: 3,
-                      move_lists:   Enum.into(move_lists,   Map.new),
-                      valid_tokens: Enum.into(valid_tokens, HashSet.new)]
+                      token_colors:   token_colors,
+                      move_lists:     Enum.into(move_lists, Map.new),
+                      move_sets:      Enum.into(move_sets, Map.new)]
 
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this

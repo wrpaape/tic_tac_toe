@@ -17,5 +17,6 @@ defmodule TicTacToe.Player do
 
   def next_move(valid_moves, _win_state) do
     
+    IO.getn("next_move")
   end
 end

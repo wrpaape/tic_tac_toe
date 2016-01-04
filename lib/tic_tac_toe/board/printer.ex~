@@ -20,7 +20,8 @@ defmodule TicTacToe.Board.Printer do
   
   def state, do: GenServer.call(__MODULE__, :state)
 
-  def print(move, token), do: GenServer.cast(__MODULE__, {:print, move, token})
+  def update(move, token), do: GenServer.cast(__MODULE__, {:update, move, token})
+  def print,               do: GenServer.cast(__MODULE__, :print)
 
   # external API ^
 
@@ -46,15 +47,20 @@ defmodule TicTacToe.Board.Printer do
       move_cells
       |> build_board(board_size, cell_builder, row_caps)
 
-    board
-    |> print_board(lines)
-
-    {:ok, {board_size, move_map, board_res, cols, lines, row_caps, cell_builder, board}}
+    {:ok, {{board, lines}, board_size, move_map, board_res, cols, row_caps, cell_builder}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_cast({:print, move, token}, {b_size, moves, b_res, cols, lines, caps, c_fun, board}) do
+  def handle_cast(:print, state) do
+    state
+    |> elem(0)
+    |> print
+
+    {:noreply, state}
+  end
+
+  def handle_cast({:update, move, token}, {{board, lines}, b_size, moves, b_res, cols, caps, c_fun}) do
     next_board = 
       fetch_key_dims!
       |> case do
@@ -73,15 +79,12 @@ defmodule TicTacToe.Board.Printer do
 
       end
 
-      next_board
-      |> print_board(lines)
-
-    {:noreply, {b_size, moves, b_res, cols, lines, caps, c_fun, next_board}}
+    {:noreply, {{next_board, lines}, b_size, moves, b_res, cols, caps, c_fun}}
   end
 
   # helpers v
 
-  defp print_board(board, {mid, top_bot}) do
+  defp print(board, {mid, top_bot}) do
     board
     |> Enum.map_join(mid, fn({_, {_, _, row}})->
       row
