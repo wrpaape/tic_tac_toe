@@ -19,11 +19,11 @@ defmodule TicTacToe.Board.Printer do
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
-    key_dims = {board_res, outer_pad_len} = fetch_key_dims!
+    key_dims = fetch_key_dims!
 
-    cell_res =
+    {cell_res, outer_pad_len} =
       board_size
-      |> calc_cell_res(board_res)
+      |> cell_res_and_outer_pad_len(key_dims)
 
     statics =
       {_lines, row_caps} =
@@ -63,27 +63,29 @@ defmodule TicTacToe.Board.Printer do
 
   defp build_row(0, _, _, acc_row), do: acc_row
 
-  defp build_row(rem_cell_rows, cells, caps = {lcap, _rcap}, acc_row) do
+  defp build_row(rem_cell_rows, cells, caps = {lcap, rcap}, acc_row) do
     {next_cells, cell_row} =
       cells
       |> Enum.map_reduce(lcap, fn([next_cell_row | rem_cell_rows], acc_cell_row)->
        {rem_cell_rows, acc_cell_row <> next_cell_row <> "║"}
       end)
 
-    build_row(rem_cell_rows - 1, next_cells, caps, acc_row <> cell_row <> "\n")
+    build_row(rem_cell_rows - 1, next_cells, caps, acc_row <> cell_row <> rcap)
   end
 
   defp fetch_key_dims! do
     {rows, cols} = Misc.fetch_dims!
-    board_res = min(rows, cols)
 
-    {board_res, cols - board_res}
+    {min(rows, cols), cols}
   end
 
-  defp calc_cell_res(board_size, board_res) do
-    board_res
-    |> div(board_size)
-    |> - (board_size + 1)
+  defp cell_res_and_outer_pad_len(board_size, {board_res, cols}) do
+    cell_res =
+      board_res
+      |> - (board_size + 1)
+      |> div(board_size)
+
+    {cell_res, cols - (cell_res + 1) * board_size - 1}
   end
 
   defp build_cell_builder_fun(board_size, cell_res) do
@@ -103,11 +105,11 @@ defmodule TicTacToe.Board.Printer do
       |> List.duplicate(cell_pad_len)
 
     fn(token)->
-        token
-        |> String.duplicate(token_space)
-        |> List.duplicate(token_space)
-        |> Enum.map(&Misc.cap(&1, lr_pad))
-        |> Misc.cap_list(tb_pad)
+      token
+      |> String.duplicate(token_space)
+      |> List.duplicate(token_space)
+      |> Enum.map(&Misc.cap(&1, lr_pad))
+      |> Misc.cap_list(tb_pad)
     end
   end
 
