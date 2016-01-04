@@ -19,17 +19,18 @@ defmodule TicTacToe.Board.Printer do
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
-    key_dims = {board_res, cols} = fetch_key_dims!
+    key_dims =
+      {board_res, cols} =
+        fetch_key_dims!
 
     cell_pad =
-      {cell_res, outer_pad_len} =
+      {cell_res, _outer_pad_len} =
         board_size
         |> cell_res_and_outer_pad_len(key_dims)
 
-    statics =
-      {_lines, row_caps} =
-        board_size
-        |> build_static_pieces(cell_pad)
+    {lines, row_caps} =
+      board_size
+      |> build_static_pieces(cell_pad)
  
     cell_builder =
       board_size
@@ -37,22 +38,25 @@ defmodule TicTacToe.Board.Printer do
 
     board = 
       move_cells
-      |> build_board(board_size, cell_builder, row_caps, cell_res)
+      |> build_board(board_size, cell_builder, row_caps)
 
-    dims = Map.new
-      |> Map.put(:b_size, board_size)
-      |> Map.put(:b_res,  board_res)
-      |> Map.put(:cols,   cols)
-      |> Map.put(:c_res,  cell_res)
-      |> Map.put(:p_len,  outer_pad_len)
+    # dims = Map.new
+    #   |> Map.put(:b_size, board_size)
+    #   |> Map.put(:b_res,  board_res)
+    #   |> Map.put(:cols,   cols)
+    #   |> Map.put(:c_res,  cell_res)
+    #   |> Map.put(:p_len,  outer_pad_len)
+
+    # {:ok, {board_size, move_map, key_dims, lines_caps, cell_builder, board}}
+    {:ok, {board_size, move_map, board_res, cols, lines, row_caps, cell_builder, board}}
 
 
-    {:ok, {dims, statics, cell_builder, board, move_map}}
+    # {:ok, {dims, statics, cell_builder, board, move_map}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_cast({:print, move, token}, {dims, statics, c_fun, board, moves}) do
+  def handle_cast({:print, move, token}, {b_size, moves, b_res, cols, lines, caps, c_fun, board}) do
     # fetch_key_dims!
     # |> case do
     #   {^dims.b_res, ^dims.cols} ->
@@ -79,7 +83,7 @@ defmodule TicTacToe.Board.Printer do
   defp update_row({free_cells, cells, _row}) do
   end
 
-  defp build_board(move_cells, board_size, cell_builder, row_caps, cell_res) do
+  defp build_board(move_cells, board_size, cell_builder, row_caps) do
     move_cells
     |> Enum.map(fn({row_key, row}) ->
       {cells_kw, cells} =
@@ -89,14 +93,11 @@ defmodule TicTacToe.Board.Printer do
           {{col_key, cell}, [cell | acc_cells]}
         end)
       
-      # {row_key, {board_size, cells_kw, build_row(cell_res, cells, row_caps, "")}}
       {row_key, {board_size, cells_kw, build_row(cells, row_caps, "")}}
     end)
   end
 
-  defp build_row([[] | _], _, acc_row), do: acc_row
-
-  # defp build_row(rem_cell_rows, cells, caps = {lcap, rcap}, acc_row) do
+  defp build_row([[] | _], _, acc_row),               do: acc_row
   defp build_row(cells, caps = {lcap, rcap}, acc_row) do
     {next_cells, cell_row} =
       cells
@@ -104,8 +105,8 @@ defmodule TicTacToe.Board.Printer do
        {rem_cell_rows, acc_cell_row <> next_cell_row <> "║"}
       end)
 
-    # build_row(rem_cell_rows - 1, next_cells, caps, acc_row <> cell_row <> rcap)
-    build_row(next_cells, caps, acc_row <> cell_row <> rcap)
+    next_cells
+    |> build_row(caps, acc_row <> cell_row <> rcap)
   end
 
   defp fetch_key_dims! do
