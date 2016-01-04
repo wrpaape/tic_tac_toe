@@ -14,21 +14,22 @@ defmodule TicTacToe.Board.Printer do
   
   def state, do: GenServer.call(__MODULE__, :state)
 
-  # def print(move, token),    do: GenServer.cast(__MODULE__, {:print, move, token})
+  def print(move, token), do: GenServer.cast(__MODULE__, {:print, move, token})
 
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
-    key_dims = fetch_key_dims!
+    key_dims = {board_res, cols} = fetch_key_dims!
 
-    {cell_res, outer_pad_len} =
-      board_size
-      |> cell_res_and_outer_pad_len(key_dims)
+    cell_pad =
+      {cell_res, outer_pad_len} =
+        board_size
+        |> cell_res_and_outer_pad_len(key_dims)
 
     statics =
       {_lines, row_caps} =
         board_size
-        |> build_static_pieces(cell_res, outer_pad_len)
+        |> build_static_pieces(cell_pad)
  
     cell_builder =
       board_size
@@ -38,14 +39,45 @@ defmodule TicTacToe.Board.Printer do
       move_cells
       |> build_board(board_size, cell_builder, row_caps, cell_res)
 
-     
-    {:ok, {board_size, key_dims, move_map, statics, cell_builder, board}}
+    dims = Map.new
+      |> Map.put(:b_size, board_size)
+      |> Map.put(:b_res,  board_res)
+      |> Map.put(:cols,   cols)
+      |> Map.put(:c_res,  cell_res)
+      |> Map.put(:p_len,  outer_pad_len)
+
+
+    {:ok, {dims, statics, cell_builder, board, move_map}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
+  def handle_cast({:print, move, token}, {dims, statics, c_fun, board, moves}) do
+    # fetch_key_dims!
+    # |> case do
+    #   {^dims.b_res, ^dims.cols} ->
+    #     board
+    #     |> update_board(moves[move], c_fun.(token))
+
+    #   {b_res, ^dims.cols} ->
+
+
+    #   {^dims.b_res, cols} ->
+
+
+    #   {b_res, cols} ->
+
+    # end
+
+    {:noreply, nil}
+  end
 
   # helpers v
+
+  defp update_board(board, {row, col}, cell), do: Keyword.update!(board, row, &update_row(&1, col, cell))
+
+  defp update_row({free_cells, cells, _row}) do
+  end
 
   defp build_board(move_cells, board_size, cell_builder, row_caps, cell_res) do
     move_cells
@@ -57,20 +89,23 @@ defmodule TicTacToe.Board.Printer do
           {{col_key, cell}, [cell | acc_cells]}
         end)
       
-      {row_key, {board_size, cells_kw, build_row(cell_res, cells, row_caps, "")}}
+      # {row_key, {board_size, cells_kw, build_row(cell_res, cells, row_caps, "")}}
+      {row_key, {board_size, cells_kw, build_row(cells, row_caps, "")}}
     end)
   end
 
-  defp build_row(0, _, _, acc_row), do: acc_row
+  defp build_row([[] | _], _, acc_row), do: acc_row
 
-  defp build_row(rem_cell_rows, cells, caps = {lcap, rcap}, acc_row) do
+  # defp build_row(rem_cell_rows, cells, caps = {lcap, rcap}, acc_row) do
+  defp build_row(cells, caps = {lcap, rcap}, acc_row) do
     {next_cells, cell_row} =
       cells
       |> Enum.map_reduce(lcap, fn([next_cell_row | rem_cell_rows], acc_cell_row)->
        {rem_cell_rows, acc_cell_row <> next_cell_row <> "║"}
       end)
 
-    build_row(rem_cell_rows - 1, next_cells, caps, acc_row <> cell_row <> rcap)
+    # build_row(rem_cell_rows - 1, next_cells, caps, acc_row <> cell_row <> rcap)
+    build_row(next_cells, caps, acc_row <> cell_row <> rcap)
   end
 
   defp fetch_key_dims! do
@@ -116,16 +151,19 @@ defmodule TicTacToe.Board.Printer do
   defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
 
   defp build_lines(horiz_lines, pads_tup) do
-    [{"╦", {"╔", "╗"}}, {"╬", {"╠", "╣"}}, {"╩", {"╚", "╝"}}]
-    |> Enum.map(fn({join, caps})->
-      horiz_lines
-      |> Enum.join(join)
-      |> Misc.cap(caps)
-      |> Misc.cap(pads_tup)
-    end)
+    [top, mid, bot] =
+      [{"╦", {"╔", "╗"}}, {"╬", {"╠", "╣"}}, {"╩", {"╚", "╝"}}]
+      |> Enum.map(fn({join, caps})->
+        horiz_lines
+        |> Enum.join(join)
+        |> Misc.cap(caps)
+        |> Misc.cap(pads_tup)
+      end)
+
+    {mid, {top, bot}}
   end
 
-  defp build_static_pieces(board_size, cell_res, pad_len) do
+  defp build_static_pieces(board_size, {cell_res, pad_len}) do
     pads_tup =
       {lpad, rpad} =
         pad_len
