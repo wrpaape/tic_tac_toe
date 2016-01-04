@@ -2,13 +2,16 @@ defmodule TicTacToe.Board.Printer do
   use GenServer
 
   require Misc
-  require BoxChars
-  
-  @token_space_ratio Helper.get_config(:token_space_ratio)
-  @border_thickness  Helper.get_config(:border_thickness)
-  @line    BoxChars.box_chars(@border_thickness, :line)
-  @caps    BoxChars.box_chars(@border_thickness, :caps)
-  @joiners BoxChars.box_chars(@border_thickness, :joiners)
+  # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
+  # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
+  # ├──┼──┤   ┣━━╋━━┫   ╠══╬══╣ 
+  # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
+  # └──┴──┘   ┗━━┻━━┛   ╚══╩══╝ 
+
+  # ┗
+  @token_space_ratio 8
+  # @token_space_ratio Helper.get_config(:token_space_ratio)
+  # @border_thickness  Helper.get_config(:border_thickness)
 
   def start_link(board_tup),   do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
 
@@ -87,8 +90,8 @@ defmodule TicTacToe.Board.Printer do
   defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
 
   defp build_lines_tup(board_res) do
-    horiz_line = String.duplicate(, board_res)
-    Misc.map_to_tup(@line_caps, &Misc.cap(horiz_line, &1))
+    horiz_line = String.duplicate("━", board_res)
+    Misc.map_to_tup(@line_caps, &Misc.cap(horiz_line, ))
   end
 
   defp build_static_pieces({outer_pad_len, board_res}) do
