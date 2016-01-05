@@ -1,5 +1,4 @@
 defmodule TicTacToe.CLI do
-  alias IO.ANSI
   alias TicTacToe.Board
   alias TicTacToe.Computer
   alias TicTacToe.Player
@@ -16,7 +15,6 @@ defmodule TicTacToe.CLI do
 
   @coin_flip_prompt "heads or tails (h/t)?" <> @cursor
   @selection_prompt "choose a valid token character:\n(printable, not whitespace, and not present in the moveset below)\n"
-  @invalid_prompt   ANSI.clear <> ANSI.red <> "invalid token: " <> ANSI.blink_slow
 
   @parse_opts [
     switches: [help: :boolean],
@@ -41,7 +39,7 @@ defmodule TicTacToe.CLI do
     
     {wrap_dir, turn_str} =
       @coin_flip_prompt
-      |> IO.gets
+      |> IO.getn
       |> String.match?(coin_flip_reg)
       |> if do: {:app, "first"}, else: {:pre, "second"}
 
@@ -50,7 +48,7 @@ defmodule TicTacToe.CLI do
       |> Map.get(board_size)
 
     turn_str
-    |> Misc.cap(ANSI.clear <> "you will have the ", " move.\n\n")
+    |> Misc.cap("\nyou will have the ", " move.\n\n")
     |> IO.write
 
     move_set_str
@@ -83,8 +81,9 @@ defmodule TicTacToe.CLI do
   def assign_tokens(prompt, wrap_dir, valids) do
     char =
       prompt
-      |> IO.gets
-      |> String.first
+      |> IO.getn
+
+      # char |> List.duplicate(10) |> IO.inspect
 
     valids
     |> Set.member?(char)
@@ -100,10 +99,9 @@ defmodule TicTacToe.CLI do
       |> Misc.wrap_pre(Computer)
       |> Misc.wrap({Player, {player_color, char}}, wrap_dir)
     else
-      char
-      |> inspect
-      |> Misc.cap(@invalid_prompt, ANSI.reset <> "\n\n")
-      |> IO.write
+      "invalid token: #{inspect(char)}" 
+      |> Misc.cap_reset(:red)
+      |> IO.puts
 
       prompt
       |> assign_tokens(wrap_dir, valids)

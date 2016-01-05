@@ -24,12 +24,12 @@ defmodule Misc do
   defmacro str_pre(rstr, lstr), do: quote do: unquote(lstr) <> unquote(rstr)
   defmacro str_app(lstr, rstr), do: quote do: unquote(lstr) <> unquote(rstr)
 
-  defmacro cap_reset(str, fun), do: quote do: unquote(str) <> apply(ANSI, unquote(fun), []) <> ANSI.reset
+  defmacro cap_reset(str, fun), do: quote do: apply(ANSI, unquote(fun), []) <>  unquote(str) <> ANSI.reset
 
   defmacro dup_str(len, str), do: quote do: String.duplicate(unquote(str), unquote(len))
   defmacro pad(len),          do: quote do: String.duplicate(" ", unquote(len))
 
-  defmacro map_to_tup(col, fun), do: quote do: Enum.map(unquote(col), unquote(fun)) |> List.to_tuple
+  defmacro map_to_tup(col, fun), do: quote do: unquote(col) |> Enum.map(unquote(fun)) |> List.to_tuple
 
   defmacro ceil_trunc(float), do: quote do: Float.ceil(quote(float)) |> trunc
   # defmacro apply_wrap_pre(right, left, mod, fun) do

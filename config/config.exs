@@ -5,12 +5,16 @@ use Mix.Config
 alias IO.ANSI
 
 initial_valids =
-  0x00400..0x3ffff
-  |> Enum.map(&<<&1 :: 16>>)
-  |> Enum.filter(fn(char)->
-    String.valid_character?(char) and
-    String.printable?(char)       and
-    String.match?(char, ~r/[^\p{Z}\p{C}]/)
+  2
+  |> :math.pow(10)
+  |> trunc
+  |> Range.new(0)
+  |> Enum.map(&:unicode.characters_to_binary([&1]))
+  |> Enum.filter(fn(cp)->
+    is_binary(cp)
+    and String.valid_character?(cp)
+    and String.printable?(cp)
+    and String.match?(cp, ~r/[^\p{Z}\p{C}]/)
   end)
   |> Enum.into(HashSet.new)
 
@@ -24,6 +28,7 @@ move_lists = [{1, ~w(1)},
                      q w e r
                      a s d f
                      z x c v)}]
+
 move_sets =
   move_lists
   |> Enum.map(fn({board_size, move_list})->
