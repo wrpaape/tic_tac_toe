@@ -27,28 +27,25 @@ defmodule TicTacToe.Board.Printer do
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
-    key_dims =
-      {board_res, cols} =
-        fetch_key_dims!
+    {rows, cols} = Misc.fetch_dims!
 
-    cell_pad =
-      {cell_res, _outer_pad_len} =
-        board_size
-        |> cell_res_and_outer_pad_len(key_dims)
+    {res_x, res_y, outer_pad_len} =
+      board_size
+      |> cell_res_and_outer_pad_len(rows, cols)
 
     {lines, row_caps} =
       board_size
-      |> build_static_pieces(cell_pad)
+      |> build_static_pieces(res_x, outer_pad_len)
  
     cell_builder =
       board_size
-      |> build_cell_builder_fun(cell_res)
+      |> build_cell_builder_fun(res_x, res_y)
 
     board = 
       move_cells
       |> build_board(cell_builder, row_caps)
 
-    {:ok, {{board, lines}, board_size, move_map, board_res, cols, row_caps, cell_builder}}
+    {:ok, {{board, lines}, board_size, move_map, rows, cols, row_caps, cell_builder}}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
@@ -61,26 +58,26 @@ defmodule TicTacToe.Board.Printer do
     {:noreply, state}
   end
 
-  def handle_cast({:update, move, token}, {{board, lines}, b_size, moves, b_res, cols, caps, c_fun}) do
+  def handle_cast({:update, move, token}, {{board, lines}, b_size, moves, rows, cols, caps, c_fun}) do
     next_board = 
-      fetch_key_dims!
+      Misc.fetch_dims!
       |> case do
-        # {^b_res, ^cols} ->
+        # {^rows, ^cols} ->
           _ ->
             board
             |> update_board(moves[move], c_fun.(token), caps)
 
-        # {b_res, ^cols} ->
+        # {rows, ^cols} ->
 
 
-        # {^b_res, cols} ->
+        # {^rows, cols} ->
 
 
-        # {b_res, cols} ->
+        # {rows, cols} ->
 
       end
 
-    {:noreply, {{next_board, lines}, b_size, moves, b_res, cols, caps, c_fun}}
+    {:noreply, {{next_board, lines}, b_size, moves, rows, cols, caps, c_fun}}
   end
 
   # helpers v
@@ -149,48 +146,44 @@ defmodule TicTacToe.Board.Printer do
     |> print_row(caps, acc_row <> cell_row <> rcap)
   end
 
-  defp fetch_key_dims! do
-    {rows, cols} = Misc.fetch_dims!
-
-    {min(rows, cols), cols}
+  defp cell_res(dim, board_size) do
+    dim 
+    |> - (board_size + 1)
+    |> div(board_size)
   end
 
-  defp cell_res_and_outer_pad_len(board_size, {board_res, cols}) do
-    cell_res =
-      board_res
-      |> - (board_size + 1)
-      |> div(board_size)
+  defp cell_res_and_outer_pad_len(board_size, rows, cols) do
+    res_x = cell_res(cols, board_size)
+    res_y = cell_res(rows, board_size)
 
-    {cell_res, cols - (cell_res + 1) * board_size - 1}
+    {res_x, res_y, cols - (res_x + 1) * board_size - 1}
   end
 
-  defp build_cell_builder_fun(board_size, cell_res) do
-    cell_pad_len = 
-      cell_res
-      |> div(@token_space_ratio)
+  defp build_cell_builder_fun(board_size, res_x, res_y) do
+    lr_pad_len = div(res_x, @token_space_ratio)
 
-    token_space = cell_res - cell_pad_len * 2
+    token_space_x = res_x - lr_pad_len * 2
 
-    lr_pad =
-      cell_pad_len
-      |> Misc.pad
+    lr_pad = Misc.pad(lr_pad_len)
+
+    tb_pad_len = div(res_y, @token_space_ratio)
+
+    token_space_y = cell_y - tb_pad_len * 2
 
     tb_pad =
-      cell_res
+      res_x
       |> Misc.pad
-      |> List.duplicate(cell_pad_len)
+      |> List.duplicate(tb_pad_len)
 
     fn({color, char})->
       char
-      |> String.duplicate(token_space)
+      |> String.duplicate(token_space_x)
       |> Misc.cap(color, @board_fg)
-      |> List.duplicate(token_space)
+      |> List.duplicate(token_space_y)
       |> Enum.map(&Misc.cap(&1, lr_pad))
       |> Misc.cap_list(tb_pad)
     end
   end
-
-  defp build_pads_tup(pad_len), do: Misc.ljust_pads(pad_len)
 
   defp build_lines(horiz_lines, pads_tup) do
     [top, mid, bot] =
@@ -206,14 +199,14 @@ defmodule TicTacToe.Board.Printer do
     {mid, {top, bot}}
   end
 
-  defp build_static_pieces(board_size, {cell_res, pad_len}) do
+  defp build_static_pieces(board_size, res_x, pad_len) do
     pads_tup =
       {lpad, rpad} =
         pad_len
-        |> build_pads_tup
+        |> Misc.ljust_pads
     
     "═"
-    |> String.duplicate(cell_res)
+    |> String.duplicate(res_x)
     |> List.duplicate(board_size)
     |> build_lines(pads_tup)
     |> Misc.wrap_app({lpad <> @cell_join , @board_bg <> rpad})
