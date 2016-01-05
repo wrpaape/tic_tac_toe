@@ -28,7 +28,7 @@ defmodule TicTacToe.Board.Printer do
 
   def init({move_map, move_cells, board_size}) do
     key_dims =
-      {board_res, cols} =
+      {_board_res, cols} =
         fetch_key_dims!
 
     cell_pad =
@@ -46,7 +46,7 @@ defmodule TicTacToe.Board.Printer do
 
     board = 
       move_cells
-      |> build_board(board_size, cell_builder, row_caps)
+      |> build_board(cell_builder, row_caps)
 
     {:ok, {{board, lines}, board_size, move_map, board_res, cols, row_caps, cell_builder}}
   end
@@ -87,7 +87,7 @@ defmodule TicTacToe.Board.Printer do
 
   defp print({board, {mid, top_bot}}) do
     board
-    |> Enum.map_join(mid, fn({_, {_, _, row}})->
+    |> Enum.map_join(mid, fn({_, {_, row}})->
       row
     end)
     |> Misc.cap(top_bot)
@@ -99,21 +99,12 @@ defmodule TicTacToe.Board.Printer do
     |> Keyword.update!(row, &update_row(&1, col, cell, caps))
   end
 
-  defp update_row({num_free, cells, _row}, col, cell, caps) do
+  defp update_row({cells, _row}, col, cell, caps) do
     {next_cells, next_cell_vals} =
       cells
       |> update_and_unzip(col, cell, Keyword.new, [])
 
-    next_row =
-      next_cell_vals
-      |> print_row(caps, "")
-
-    num_free
-    |> - 1
-    |> case do
-      0        -> next_row
-      next_num -> {next_num, next_cells, next_row}
-    end
+    {next_cells, print_row(next_cell_vals, caps, "")}
   end
 
   defp update_and_unzip([{col, _} | rem_cells], col, cell, acc_cells, acc_vals) do
@@ -131,7 +122,7 @@ defmodule TicTacToe.Board.Printer do
     |> update_and_unzip(col, cell, [tup | acc_cells], [val | acc_vals])
   end
 
-  defp build_board(move_cells, board_size, cell_builder, row_caps) do
+  defp build_board(move_cells, cell_builder, row_caps) do
     move_cells
     |> Enum.map(fn({row_key, row}) ->
       {cells, cell_vals} =
@@ -142,7 +133,7 @@ defmodule TicTacToe.Board.Printer do
         end
         |> :lists.mapfoldr([], row)
       
-      {row_key, {board_size, cells, print_row(cell_vals, row_caps, "")}}
+      {row_key, {cells, print_row(cell_vals, row_caps, "")}}
     end)
   end
 
