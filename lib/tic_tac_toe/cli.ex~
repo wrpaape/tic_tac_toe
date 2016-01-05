@@ -11,7 +11,7 @@ defmodule TicTacToe.CLI do
   @max        Misc.get_config(:max_board_size)
   @def        Misc.get_config(:def_board_size)
   @move_sets  Misc.get_config(:move_sets)
-  @colors     Misc.get_config(:colors)
+  @colors     Misc.get_config(:token_colors)
   @cursor     Misc.cap_reset("\n > ", :blink_slow)
 
   @coin_flip_prompt "heads or tails (h/t)?" <> @cursor
@@ -101,7 +101,6 @@ defmodule TicTacToe.CLI do
       |> Misc.wrap({Player, {player_color, char}}, wrap_dir)
     else
       char
-      |> inspect
       |> Misc.cap(@invalid_prompt, ANSI.reset <> "\n\n")
       |> IO.write
 
@@ -113,7 +112,7 @@ defmodule TicTacToe.CLI do
   defp alert(msg, color \\ :red) do
     msg   
     |> Misc.cap_reset(color)
-    |> IO.puts
+    |> IO.write
 
     System.halt(0)
   end

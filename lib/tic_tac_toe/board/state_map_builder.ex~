@@ -20,7 +20,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
         row_chunks
         |> win_sets
 
-      {move_map, move_cells} =
+      {move_cells, move_map} =
         row_chunks
         |> printer_tup
 
@@ -32,38 +32,33 @@ defmodule TicTacToe.Board.StateMapBuilder do
   #external API ^
 
   def printer_tup(row_chunks) do
-    row_chunks
-    |> Enum.reduce({Map.new, Keyword.new, 0}, fn(row_moves, {move_map, move_cells, row_index})->
-      row_key =
-       "row_" 
-        <> Integer.to_string(row_index)
-        |> String.to_atom
-
-      move_cells =
-        move_cells
-        |> Keyword.put(row_key, Keyword.new)
-
-      row_moves
-      |> Enum.reduce({move_map, move_cells, 0}, fn(move, {move_map, move_cells, col_index})->
-        col_key =
-         "col_" 
-          <> Integer.to_string(col_index)
+    {rows, {move_map, _}} =
+      row_chunks
+      |> Enum.map_reduce({Map.new, 0}, fn(row_moves, {move_map, row_index})->
+        row_key =
+         "row_" 
+          <> Integer.to_string(row_index)
           |> String.to_atom
 
-        move_map = 
-          move_map
-          |> Map.put(move, {row_key, col_key})
+        {cols, {move_map, _}} =
+          row_moves
+          |> Enum.map_reduce({move_map, 0}, fn(move, {move_map, col_index})->
+            col_key =
+             "col_" 
+              <> Integer.to_string(col_index)
+              |> String.to_atom
 
-        move_cells =
-          move_cells
-          |> Keyword.update!(row_key, &Keyword.put(&1, col_key, move))
+            move_map = 
+              move_map
+              |> Map.put(move, {row_key, col_key})
 
-        {move_map, move_cells, col_index + 1}
+            {{col_key, move}, {move_map, col_index + 1}}
+          end)
+
+        {{row_key, cols}, {move_map, row_index + 1}}
       end)
-      |> Tuple.delete_at(2)
-      |> Tuple.append(row_index + 1)
-    end)
-    |> Tuple.delete_at(2)
+
+    {rows, move_map}
   end
 
   def win_sets(row_chunks) do

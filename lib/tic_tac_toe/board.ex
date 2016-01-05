@@ -10,7 +10,7 @@ defmodule TicTacToe.Board do
 
   def state,                  do: GenServer.call(__MODULE__, :state)
 
-  def next_move(player_tup),  do: GenServer.call(__MODULE__, {:next_move, player_tup})
+  def next_move(player_tup),  do: GenServer.call(__MODULE__, {:next_move, player_tup}, :infinity)
 
   def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
 
