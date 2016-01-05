@@ -29,22 +29,20 @@ defmodule TicTacToe.Board do
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_call({:next_move, {player, token}}, _from, state = {valid_moves, win_state}) do
-    Printer.print
-
+  def handle_call({:next_move, {player, token = {_, char}}}, _from, state = {valid_moves, win_state}) do
     next_move =
       player
-      |> apply(:next_move, [valid_moves, win_state])
+      |> apply(:next_move, [Printer.print, valid_moves, win_state])
       
     next_move
     |> Printer.update(token)
 
     next_move
-    |> next_win_state(token, win_state)
-    |> IO.inspect
+    |> next_win_state(char, win_state)
     |> case do
       {:game_over, go_msg} ->
         Printer.print
+        |> IO.write
 
         {:stop, :shutdown, go_msg, state}
 

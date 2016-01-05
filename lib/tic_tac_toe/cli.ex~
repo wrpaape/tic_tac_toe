@@ -12,7 +12,7 @@ defmodule TicTacToe.CLI do
   @def        Misc.get_config(:def_board_size)
   @move_sets  Misc.get_config(:move_sets)
   @colors     Misc.get_config(:token_colors)
-  @cursor     Misc.cap_reset("\n > ", :blink_slow)
+  @cursor     Misc.get_config(:cursor)
 
   @coin_flip_prompt "heads or tails (h/t)?" <> @cursor
   @selection_prompt "choose a valid token character:\n(printable, not whitespace, and not present in the moveset below)\n"
@@ -97,10 +97,12 @@ defmodule TicTacToe.CLI do
       |> Set.delete(char)
       |> Enum.random
       |> Misc.wrap_pre(computer_color)
-      |> Misc.wrap_pre(Computer)
+      # |> Misc.wrap_pre(Computer)
+      |> Misc.wrap_pre(Player)
       |> Misc.wrap({Player, {player_color, char}}, wrap_dir)
     else
       char
+      |> inspect
       |> Misc.cap(@invalid_prompt, ANSI.reset <> "\n\n")
       |> IO.write
 

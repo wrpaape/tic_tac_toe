@@ -1,7 +1,13 @@
 defmodule TicTacToe.Computer do
+  require Misc
+
+  @cursor Misc.get_config(:cursor)
+  @prompt "computer move:" <> @cursor
+
   def next_move(valid_moves, win_state) do
 
-    IO.getn("next_move")
-    
+    @prompt
+    |> IO.gets
+    |> String.first
   end
 end

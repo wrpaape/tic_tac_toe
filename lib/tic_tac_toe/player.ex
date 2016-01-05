@@ -1,22 +1,35 @@
 defmodule TicTacToe.Player do
   alias IO.ANSI 
+  alias TicTacToe.Board.Printer
   
   require Misc
+
+  @cursor        Misc.get_config(:cursor)
+  @select_prompt "\n\nplayer move:" <> @cursor
   
-  @warning "invalid move, please select from:\n  "
-    |> Misc.cap(ANSI.red, ANSI.bright <> ANSI.yellow)
+  @invalid_prompt ANSI.red       <> "\n\ninvalid move: "                <> ANSI.blink_slow
+  @warning_prompt ANSI.blink_off <> "\n\nplease select from:\n\n  " <> ANSI.yellow
 
-      # {:invalid, valid_moves} -> 
-      #   valid_moves
-      #   |> inspect
-      #   |> Misc.cap(@warning, ANSI.reset)
-      #   |> IO.puts
+  def next_move(board, valid_moves, _win_state) do
+    move =
+      board <> @select_prompt
+      |> IO.gets
+      |> String.first
 
-      #   player_tup
-      #   |> next_move(next_turn)
+    valid_moves
+    |> Enum.member?(move)
+    |> if do: move, else: redo(move, valid_moves, board)
+  end
 
-  def next_move(valid_moves, _win_state) do
-    
-    IO.getn("next_move")
+  def redo(move, valid_moves, board) do
+    valid_moves_prompt =
+      valid_moves
+      |> inspect
+      |> Misc.cap(@warning_prompt, ANSI.reset)
+
+    move
+    |> inspect
+    |> Misc.cap(board <> @invalid_prompt, valid_moves_prompt)
+    |> next_move(valid_moves, nil)
   end
 end

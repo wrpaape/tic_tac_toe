@@ -66,6 +66,7 @@ token_colors =
 config :tic_tac_toe, [min_board_size: 1,
                       max_board_size: 4,
                       def_board_size: 3,
+                      cursor:         ANSI.blink_slow <> "\n> " <> ANSI.reset,
                       token_colors:   token_colors,
                       move_lists:     Enum.into(move_lists, Map.new),
                       move_sets:      Enum.into(move_sets, Map.new)]

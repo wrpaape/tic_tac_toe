@@ -11,10 +11,12 @@ defmodule TicTacToe.Board.Printer do
   # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
   # └──┴──┘   ┗━━┻━━┛   ╚══╩══╝ 
 
-  @token_space_ratio 8
-  @board_fg          ANSI.normal <> ANSI.white_background <> ANSI.black
-  @board_bg          ANSI.black_background
-  @cell_join         @board_fg <> "║"
+  @board_tot_ratio 0.75
+  @token_pad_ratio 8
+
+  @board_fg  ANSI.normal <> ANSI.white_background <> ANSI.black
+  @board_bg  ANSI.black_background
+  @cell_join @board_fg <> "║"
 
   def start_link(board_tup), do: GenServer.start_link(__MODULE__, board_tup, name: __MODULE__)
   
@@ -22,20 +24,20 @@ defmodule TicTacToe.Board.Printer do
 
   def update(move, token), do: GenServer.cast(__MODULE__, {:update, move, token})
 
-  def print,               do: GenServer.cast(__MODULE__, :print)
+  def print,               do: GenServer.call(__MODULE__, :print)
 
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
     {rows, cols} = Misc.fetch_dims!
 
-    {res_x, res_y, outer_pad_len} =
+    {res_x, res_y, pad_len} =
       board_size
       |> cell_res_and_outer_pad_len(rows, cols)
 
     {lines, row_caps} =
       board_size
-      |> build_static_pieces(res_x, outer_pad_len)
+      |> build_static_pieces(res_x, pad_len)
  
     cell_builder =
       board_size
@@ -50,12 +52,8 @@ defmodule TicTacToe.Board.Printer do
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
 
-  def handle_cast(:print, state) do
-    state
-    |> elem(0)
-    |> print
-
-    {:noreply, state}
+  def handle_call(:print, _from, state) do
+    {:reply, state |> elem(0) |> print, state}
   end
 
   def handle_cast({:update, move, token}, {{board, lines}, b_size, moves, rows, cols, caps, c_fun}) do
@@ -88,7 +86,6 @@ defmodule TicTacToe.Board.Printer do
       row
     end)
     |> Misc.cap(top_bot)
-    |> IO.write
   end
 
   defp update_board(board, {row, col}, cell, caps) do
@@ -147,7 +144,8 @@ defmodule TicTacToe.Board.Printer do
   end
 
   defp cell_res(dim, board_size) do
-    dim 
+    dim * @board_tot_ratio
+    |> trunc
     |> - (board_size + 1)
     |> div(board_size)
   end
@@ -160,13 +158,13 @@ defmodule TicTacToe.Board.Printer do
   end
 
   defp build_cell_builder_fun(board_size, res_x, res_y) do
-    lr_pad_len = div(res_x, @token_space_ratio)
+    lr_pad_len = div(res_x, @token_pad_ratio)
 
     token_space_x = res_x - lr_pad_len * 2
 
     lr_pad = Misc.pad(lr_pad_len)
 
-    tb_pad_len = div(res_y, @token_space_ratio)
+    tb_pad_len = div(res_y, @token_pad_ratio)
 
     token_space_y = res_y - tb_pad_len * 2
 
@@ -196,7 +194,7 @@ defmodule TicTacToe.Board.Printer do
         |> Misc.cap(pads_tup)
       end)
 
-    {mid, {top, bot}}
+    {mid, {ANSI.clear <> top, bot <> ANSI.reset}}
   end
 
   defp build_static_pieces(board_size, res_x, pad_len) do
@@ -216,15 +214,4 @@ defmodule TicTacToe.Board.Printer do
   # ├──┼──┤   ┣━━╋━━┫   ╠══╬══╣ 
   # │  │  │   ┃  ┃  ┃   ║  ║  ║ 
   # └──┴──┘   ┗━━┻━━┛   ╚══╩══╝ 
-
-  # defp allocate_dims(cols, board_size) do
-  #   &div(&1 -  1, board_size)
-  #   next_board =
-  #     board
-  #     |> List.update_at(row_fun.(next_move), fn(row)->
-  #       row
-  #       |> List.keyreplace_at(next_move, 0, {next_move, token})
-  #     end)
-    
-  # end
 end
