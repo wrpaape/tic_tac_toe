@@ -44,7 +44,7 @@ defmodule TicTacToe.Board do
         Printer.print
         |> IO.write
 
-        {:stop, :shutdown, go_msg, state}
+        {:stop, :normal, go_msg, state}
 
       next_win_state -> 
         {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}

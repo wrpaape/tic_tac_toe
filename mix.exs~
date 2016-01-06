@@ -1,8 +1,8 @@
-defmodule Tictactoe.Mixfile do
+defmodule TicTacToe.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :tictactoe,
+    [app: :tic_tac_toe,
      version: "0.0.1",
      elixir: "~> 1.1",
      build_embedded: Mix.env == :prod,

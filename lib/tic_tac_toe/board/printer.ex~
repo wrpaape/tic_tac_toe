@@ -26,6 +26,23 @@ defmodule TicTacToe.Board.Printer do
 
   def print,               do: GenServer.call(__MODULE__, :print)
 
+  def reject_pattern do
+    ~w(? no_ home not_ font off clear default normal reset)
+    |> :binary.compile_pattern
+  end
+
+  def ansi_test do
+    :functions
+    |> ANSI.__info__
+    |> Enum.filter_map(&(elem(&1, 1) == 0), &to_string(elem(&1, 0)))
+    |> Enum.filter_map(&not(String.contains?(&1, reject_pattern)), &{String.to_atom(&1), &1})
+    |> Enum.sort
+    |> Enum.reduce(ANSI.clear, fn({fun, str}, acc)->
+      acc <> apply(ANSI, fun, []) <> "\ntesting IO.ANSI." <> str <> ANSI.reset
+    end)
+    |> IO.write
+  end
+
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
@@ -60,18 +77,18 @@ defmodule TicTacToe.Board.Printer do
     next_board = 
       Misc.fetch_dims!
       |> case do
-        # {^rows, ^cols} ->
-          _ ->
+        {^rows, ^cols} ->
             board
             |> update_board(moves[move], c_fun.(token), caps)
 
-        # {rows, ^cols} ->
+        {rows, ^cols} ->
+          c_fun = 
 
 
-        # {^rows, cols} ->
+        {^rows, cols} ->
 
 
-        # {rows, cols} ->
+        {rows, cols} ->
 
       end
 

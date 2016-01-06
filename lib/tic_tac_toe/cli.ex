@@ -14,7 +14,7 @@ defmodule TicTacToe.CLI do
   @colors     Misc.get_config(:token_colors)
   @cursor     Misc.get_config(:cursor)
 
-  @coin_flip_prompt "heads or tails (h/t)?" <> @cursor
+  @coin_flip_prompt ANSI.clear <> "heads or tails (h/t)?" <> @cursor
   @selection_prompt "choose a valid token character:\n(printable, not whitespace, and not present in the moveset below)\n"
   @invalid_prompt   ANSI.clear <> ANSI.red <> "invalid token: " <> ANSI.blink_slow
 
@@ -36,6 +36,9 @@ defmodule TicTacToe.CLI do
   def process(:error),           do: alert("failed to parse integer from board size")
   def process(:help),            do: alert("usage: tic_tac_toe (<board size>)", :blue)
   def process(board_size)        do
+    seed
+    |> :random.seed
+
     board_size
     |> Board.start_link
     
@@ -118,4 +121,7 @@ defmodule TicTacToe.CLI do
 
     System.halt(0)
   end
+
+  defp seed, do: {:erlang.phash2(node), :erlang.monotonic_time, :erlang.unique_integer}
+
 end
