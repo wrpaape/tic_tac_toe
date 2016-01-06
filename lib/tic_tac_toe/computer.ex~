@@ -33,7 +33,16 @@ defmodule TicTacToe.Computer do
 
   def handle_call(:state, _from, state), do: {:ok, state, state}
 
-  def handle_call({:next_move, {board, valids, win_state}}, _from, {}), do: {:ok, state, state}
+  def handle_call({:next_move, {board, valids, win_state}}, _from, {c_char, p_char, [fact | rem_facts]}) do
+    board <> @prompt
+    |> IO.write
+
+    move = Enum.random(valids)
+
+    IO.puts move
+
+    {:reply, move, {c_char, p_char, rem_facts}}
+  end
 
   def next_move() do
     valid_moves

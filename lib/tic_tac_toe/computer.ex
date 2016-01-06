@@ -56,8 +56,7 @@ defmodule TicTacToe.Computer do
   # helpers v
 
   defp build_fact_sequence(open_rem_cells) do
-    1..up_to
-    |> Range.new(board_size * board_size - turn_offset)
+    1..open_rem_cells
     |> Enum.scan(&(&1 * &2))
     |> Enum.reverse
     |> Enum.take_every(2)
