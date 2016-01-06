@@ -21,7 +21,6 @@ defmodule Misc do
 
 
   defmacro cap_list(list, lcap, rcap),   do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
-  # defmacro cap_list(list, {lcap, rcap}), do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
   defmacro cap_list(list, cap),          do: quote do: unquote(cap)  ++ unquote(list) ++ unquote(cap)
 
   defmacro str_pre(rstr, lstr), do: quote do: unquote(lstr) <> unquote(rstr)
