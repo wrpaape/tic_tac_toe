@@ -1,11 +1,10 @@
 defmodule TicTacToe.Board do
   use GenServer
-  
+
+  alias TicTacToe.Board.EndGame
+  alias TicTacToe.Board.InitialState
   alias TicTacToe.Board.Computer
   alias TicTacToe.Board.Printer
-  alias TicTacToe.Board.StateMapBuilder
-
-  @state_map StateMapBuilder.build
 
   def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 
@@ -13,14 +12,12 @@ defmodule TicTacToe.Board do
 
   def next_move(player_tup),  do: GenServer.call(__MODULE__, {:next_move, player_tup}, :infinity)
 
-  def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
-
   # external API ^
   
   def init(board_size) do
     {valid_moves, win_state, outcome_counts, move_map, move_cells} =
-      @state_map
-      |> Map.get(board_size)
+      board_size
+      |> InitialState.get
 
     {move_map, move_cells, board_size}
     |> Printer.start_link
@@ -39,7 +36,7 @@ defmodule TicTacToe.Board do
     |> Printer.update(token)
 
     next_move
-    |> next_win_state(char, win_state)
+    |> EndGame.next_win_state(char, win_state)
     |> case do
       # {:game_over, go_msg} ->
         # Printer.print
@@ -54,49 +51,6 @@ defmodule TicTacToe.Board do
   end
 
   # helpers v
-
-  defmacrop recurse(next_acc_state) do
-    quote do
-      next_info(var!(move), var!(char), var!(rem_state), unquote(next_acc_state))
-    end
-  end
-
-  defmacrop push_next(next_info) do
-    quote do: recurse([unquote(next_info) | var!(acc_state)])
-  end
-
-  defmacrop reduce_owned_or_unclaimed_info_and_recurse do
-    quote do
-      var!(win_set)
-      |> Set.delete(var!(move))
-      |> case do
-        %HashSet{size: ^var!(size)} -> push_next(var!(info))
-        # %HashSet{size: 0}           -> {:game_over, var!(char) <> " W I N S !"}
-        %HashSet{size: 0}           -> 1
-        next_win_set                -> push_next({next_win_set, var!(char)})
-      end
-    end
-  end
-
-  def next_info(move, char, [info = win_set = %HashSet{size: size} | rem_state], acc_state) do
-    reduce_owned_or_unclaimed_info_and_recurse
-  end
-
-  def next_info(move, char, [info = {win_set = %HashSet{size: size}, char} | rem_state], acc_state) do
-    reduce_owned_or_unclaimed_info_and_recurse
-  end
-
-  def next_info(move, char, [occ_info | rem_state], acc_state) do
-    occ_info
-    |> elem(0)
-    |> Set.member?(move)
-    |> if do: recurse(acc_state), else: push_next(occ_info)
-  end
-
-  # def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}
-  def next_info(_move, _token, [], []),             do: 0
-  def next_info(_move, _token, [], next_win_state), do: next_win_state
-
 
   defp apply_next_move(Computer, board, valid_moves, win_state) do
     {board, valid_moves, win_state}
