@@ -81,15 +81,16 @@ defmodule TicTacToe.Board.Printer do
             board
             |> update_board(moves[move], c_fun.(token), caps)
 
-            # need new cell builder
-        {rows, ^cols} ->
-          c_fun = 
+            # need new cell builder, rows
+        # {rows, ^cols} ->
 
 
-        {^rows, cols} ->
+          # need new cell builder, lines, cols
+        # {^rows, cols} ->
 
 
-        {rows, cols} ->
+          # need new cell builder, lines, row, cols
+        # {rows, cols} ->
 
       end
 

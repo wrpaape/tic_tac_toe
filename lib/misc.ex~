@@ -8,6 +8,8 @@ defmodule Misc do
 
   defmacro get_config(key), do: quote do: Application.get_env(:tic_tac_toe, unquote(key))
 
+  defmacro int_pow(x, n), do: quote do: unquote(x) |> :math.pow(unquote(n)) |> trunc
+
   defmacro wrap_pre(right, left), do: quote do: {unquote(left), unquote(right)}
   defmacro wrap_app(left, right), do: quote do: {unquote(left), unquote(right)}
 
@@ -16,6 +18,7 @@ defmodule Misc do
   def cap(str, lcap, rcap),   do: lcap <> str <> rcap
   def cap(str, {lcap, rcap}), do: lcap <> str <> rcap
   def cap(str, cap),          do:  cap <> str <> cap
+
 
   defmacro cap_list(list, lcap, rcap),   do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)
   # defmacro cap_list(list, {lcap, rcap}), do: quote do: unquote(lcap) ++ unquote(list) ++ unquote(rcap)

@@ -89,11 +89,5 @@ defmodule TicTacToe.Board.StateMapBuilder do
     |> Enum.reduce(rows_cols, &[elem(&1, 0) | &2])
   end
 
-  defp move_list(board_size), do: Enum.to_list(1..last_cell(board_size))
-
-  defp last_cell(board_size) do
-    board_size
-    |> :math.pow(2)
-    |> trunc
-  end
+  defp move_list(board_size), do: Enum.to_list(1..(board_size * board_size))
 end

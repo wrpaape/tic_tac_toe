@@ -42,11 +42,14 @@ defmodule TicTacToe.CLI do
     board_size
     |> Board.start_link
     
-    {wrap_dir, turn_str} =
+    {computer_position, wrap_dir, turn_str} =
       @coin_flip_prompt
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {:app, "first"}, else: {:pre, "second"}
+      |> if do: {1, :app, "first"}, else: {0, :pre, "second"}
+
+    {board_size, computer_position}
+    |> Computer.start_link
 
     {valids, move_set_str} =
       @move_sets
