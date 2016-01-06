@@ -16,8 +16,6 @@ defmodule TicTacToe.Computer do
 
   # external api ^
 
-  def init({}, rem_cells}) do
-
   def init({turn_tup, rem_cells}) do
     {computer_char, player_char, turn_offset} =
       turn_tup
@@ -42,15 +40,6 @@ defmodule TicTacToe.Computer do
     IO.puts move
 
     {:reply, move, {c_char, p_char, rem_facts}}
-  end
-
-  def next_move() do
-    valid_moves
-    |> Enum.each(fn(move)->
-      
-      
-    end)
-
   end
 
   # helpers v

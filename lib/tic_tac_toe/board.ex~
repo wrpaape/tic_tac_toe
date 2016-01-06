@@ -18,7 +18,7 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(board_size) do
-    {valid_moves, win_state, move_map, move_cells} =
+    {valid_moves, win_state, outcome_counts, move_map, move_cells} =
       @state_map
       |> Map.get(board_size)
 

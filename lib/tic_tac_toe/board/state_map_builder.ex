@@ -1,6 +1,8 @@
 defmodule TicTacToe.Board.StateMapBuilder do
   require Misc
 
+  alias TicTacToe.Board
+
   @min_board_size  Misc.get_config(:min_board_size)
   @max_board_size  Misc.get_config(:max_board_size)
   @move_lists      Misc.get_config(:move_lists)
@@ -30,7 +32,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
         row_chunks
         |> win_sets
 
-      outcomes_sequence =
+      outcome_counts =
         valid_moves
         |> num_possible_outcomes_by_turn(win_state)
 
@@ -39,7 +41,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
         |> printer_tup
 
       state_map
-      |> Map.put(board_size, {valid_moves, win_state, move_map, move_cells})
+      |> Map.put(board_size, {valid_moves, win_state, outcome_counts, move_map, move_cells})
     end)
   end
 
@@ -53,7 +55,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
     end
 
     Map.new
-    |> collect(countdown.(), countown)
+    |> collect(countdown.(), countdown)
   end
 
   def collect(results, tref, countdown) do
@@ -72,25 +74,41 @@ defmodule TicTacToe.Board.StateMapBuilder do
     end
   end
 
-  def recurse(rem_moves, rem_sets, last_turn, root_pid) do
-    valid_moves
-    |> Enum.reduce({[], tl(valid_moves)}, fn(move, {}))
+  def recurse(rem_moves, token, win_state, turn, collector_pid) do
+    rem_moves
+    |> Enum.reduce({[], tl(rem_moves)}, fn(move, {other_before, other_after})->
+      move
+      |> Board.next_win_state(token, win_state)
+      |> case do
+        end_game when is_number(end_game) -> 
+          collector_pid
+          |> send({:record, turn})
+
+        next_win_state ->
+          __MODULE__
+          |> spawn(:recurse, [other_before ++ other_after, not token, next_win_state, turn + 1, collector_pid])
+      end
+
+      {[move | other_before], tl(other_after)}
+    end)
   end
 
-  def num_possible_outcomes_by_turn(valid_moves, win_sets) do
+  def num_possible_outcomes_by_turn(valid_moves, win_state) do
     collector_pid =
-    __MODULE__
-    |> spawn(:collector, [self])
+      __MODULE__
+      |> spawn(:collector, [self])
 
-    Agent.start_link(fn -> {Map.new, })
     __MODULE__
-    |> spawn(:recurse, [valid_moves, win_sets, 0, self])
-
+    |> spawn(:recurse, [valid_moves, true, win_state, 1, collector_pid])
 
 
     receive do
-      turn -> 
-
+      results -> 
+        results
+        |> Enum.sort(&>=/2)
+        |> Enum.map(&elem(&1, 1))
+      
+      # after 5000 -> throw("taking too long")
     end
   end
 
@@ -152,5 +170,5 @@ defmodule TicTacToe.Board.StateMapBuilder do
     |> Enum.reduce(rows_cols, &[elem(&1, 0) | &2])
   end
 
-  defp def_move_list(num_cells), do: Enum.map(1..num_cells, &Integer.to_string)
+  defp def_move_list(num_cells), do: Enum.map(1..num_cells, &Integer.to_string/1)
 end
