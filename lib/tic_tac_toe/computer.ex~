@@ -1,11 +1,10 @@
 defmodule TicTacToe.Computer do
   use GenServer
 
-  require Misc
+  require Utils
 
-  @cursor Misc.get_config(:cursor)
+  @cursor Utils.get_config(:cursor)
   @prompt "computer move:" <> @cursor
-  @max_moves Misc.get_config(:max_board_size) |> Misc.int_pow(2)
 
   def start_link(game_info), do: GenServer.start_link(__MODULE__, game_info, name: __MODULE__)
 
@@ -42,7 +41,6 @@ defmodule TicTacToe.Computer do
     {:reply, move, {c_char, p_char, rem_facts}}
   end
 
-
   # helpers v
 
   defp build_fact_sequence(open_rem_cells) do
@@ -52,5 +50,4 @@ defmodule TicTacToe.Computer do
     |> Enum.take_every(2)
     |> Mis.wrap_pre(:ok)
   end
-
 end

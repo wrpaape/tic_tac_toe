@@ -59,7 +59,6 @@ defmodule TicTacToe.CLI do
     move_set_str
     |> Misc.cap(@selection_prompt, @cursor)
     |> assign_tokens(wrap_dir, valids)
-    |> Computer.start_link(board_size)
     |> TicTacToe.start
   end
 

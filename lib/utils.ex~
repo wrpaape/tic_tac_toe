@@ -1,17 +1,12 @@
 defmodule Utils do
   alias IO.ANSI
-  alias Mix.Project
 
-  import Mix.Utils, only: [underscore: 1]
-
-  def get_config(key), do: Application.get_env(:tic_tac_toe, key)
-
-  def app_name(module) do
-    module
-    |> Module.split
-    |> hd
-    |> underscore
-    |> String.to_atom
+  defmacro module_path do
+    quote do
+      __MODULE__
+      |> Mix.Utils.underscore
+      |> Path.expand(unquote(project_parent_dir))
+    end
   end
 
   def project_parent_dir do
@@ -21,27 +16,19 @@ defmodule Utils do
     |> Path.expand(Mix.Project.app_path)
   end
 
-  defmacro module_path do
-    quote do
-      __MODULE__
-      |> underscore
-      |> Path.expand(unquote(project_parent_dir))
-    end
-  end
-
   def get_config(key) do
-    Project.get
+    Mix.Project.get
+    |> Module.split
+    |> hd
     |> Mix.Utils.underscore
     |> String.to_atom
     |> Application.get_env(key)
   end
 
-  def int_pow(x, n), do: x |> :math.pow(n) |> trunc
-
   def wrap_pre(right, left), do: {left, right}
   def wrap_app(left, right), do: {left, right}
 
-  def push_in(el, list), do: [el) | list]
+  def push_in(el, list), do: [el | list]
 
   def str_pre(rstr, lstr), do: lstr <> rstr
   def str_app(lstr, rstr), do: lstr <> rstr
@@ -55,7 +42,7 @@ defmodule Utils do
 
   def ceil_trunc(float), do: Float.ceil(float) |> trunc
 
-  def div_rem_two(nmr),      do: {div(nmr), 2, rem(nmr), 2} 
+  def div_rem_two(nmr),      do: {div(nmr, 2), rem(nmr, 2)} 
   def pad_wrap(left, right), do: {pad(left), pad(right)}
 
   def cap(str, lcap, rcap),   do: lcap <> str <> rcap

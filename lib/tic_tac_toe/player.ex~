@@ -2,12 +2,11 @@ defmodule TicTacToe.Player do
   alias IO.ANSI 
   alias TicTacToe.Board.Printer
   
-  require Misc
+  require Utils
 
-  @cursor        Misc.get_config(:cursor)
-  @select_prompt "\n\nplayer move:" <> @cursor
+  @select_prompt "\n\nplayer move:" <> Utils.get_config(:cursor)
   
-  @invalid_prompt ANSI.red       <> "\n\ninvalid move: "                <> ANSI.blink_slow
+  @invalid_prompt ANSI.red       <> "\n\ninvalid move: "            <> ANSI.blink_slow
   @warning_prompt ANSI.blink_off <> "\n\nplease select from:\n\n  " <> ANSI.yellow
 
   def next_move(board, valid_moves) do
@@ -25,11 +24,11 @@ defmodule TicTacToe.Player do
     valid_moves_prompt =
       valid_moves
       |> inspect
-      |> Misc.cap(@warning_prompt, ANSI.reset)
+      |> Utils.cap(@warning_prompt, ANSI.reset)
 
     move
     |> inspect
-    |> Misc.cap(board <> @invalid_prompt, valid_moves_prompt)
+    |> Utils.cap(board <> @invalid_prompt, valid_moves_prompt)
     |> next_move(valid_moves)
   end
 end

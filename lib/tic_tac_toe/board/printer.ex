@@ -1,8 +1,6 @@
 defmodule TicTacToe.Board.Printer do
   use GenServer
 
-  require Misc
-
   alias IO.ANSI
 
   # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
@@ -46,7 +44,7 @@ defmodule TicTacToe.Board.Printer do
   # external API ^
 
   def init({move_map, move_cells, board_size}) do
-    {rows, cols} = Misc.fetch_dims!
+    {rows, cols} = Utils.fetch_dims!
 
     {res_x, res_y, pad_len} =
       board_size
@@ -75,7 +73,7 @@ defmodule TicTacToe.Board.Printer do
 
   def handle_cast({:update, move, token}, {{board, lines}, b_size, moves, rows, cols, caps, c_fun}) do
     next_board = 
-      Misc.fetch_dims!
+      Utils.fetch_dims!
       |> case do
         {^rows, ^cols} ->
             board
@@ -104,7 +102,7 @@ defmodule TicTacToe.Board.Printer do
     |> Enum.map_join(mid, fn({_, {_, row}})->
       row
     end)
-    |> Misc.cap(top_bot)
+    |> Utils.cap(top_bot)
   end
 
   defp update_board(board, {row, col}, cell, caps) do
@@ -127,7 +125,7 @@ defmodule TicTacToe.Board.Printer do
 
     [{col, cell} | acc_cells]
     |> Enum.reverse(rem_cells)
-    |> Misc.wrap_app(Enum.reverse([cell | acc_vals], rem_vals))
+    |> Utils.wrap_app(Enum.reverse([cell | acc_vals], rem_vals))
   end
 
   defp update_and_unzip([tup = {_, val} | rem_cells], col, cell, acc_cells, acc_vals) do
@@ -181,7 +179,7 @@ defmodule TicTacToe.Board.Printer do
 
     token_space_x = res_x - lr_pad_len * 2
 
-    lr_pad = Misc.pad(lr_pad_len)
+    lr_pad = Utils.pad(lr_pad_len)
 
     tb_pad_len = div(res_y, @token_pad_ratio)
 
@@ -189,16 +187,16 @@ defmodule TicTacToe.Board.Printer do
 
     tb_pad =
       res_x
-      |> Misc.pad
+      |> Utils.pad
       |> List.duplicate(tb_pad_len)
 
     fn({color, char})->
       char
       |> String.duplicate(token_space_x)
-      |> Misc.cap(color, @board_fg)
+      |> Utils.cap(color, @board_fg)
       |> List.duplicate(token_space_y)
-      |> Enum.map(&Misc.cap(&1, lr_pad))
-      |> Misc.cap_list(tb_pad)
+      |> Enum.map(&Utils.cap(&1, lr_pad))
+      |> Utils.cap_list(tb_pad)
     end
   end
 
@@ -208,9 +206,9 @@ defmodule TicTacToe.Board.Printer do
       |> Enum.map(fn({join, caps})->
         horiz_lines
         |> Enum.join(join)
-        |> Misc.cap(caps)
-        |> Misc.cap(@board_fg, @board_bg)
-        |> Misc.cap(pads_tup)
+        |> Utils.cap(caps)
+        |> Utils.cap(@board_fg, @board_bg)
+        |> Utils.cap(pads_tup)
       end)
 
     {mid, {ANSI.clear <> top, bot <> ANSI.reset}}
@@ -220,13 +218,13 @@ defmodule TicTacToe.Board.Printer do
     pads_tup =
       {lpad, rpad} =
         pad_len
-        |> Misc.ljust_pads
+        |> Utils.ljust_pads
     
     "═"
     |> String.duplicate(res_x)
     |> List.duplicate(board_size)
     |> build_lines(pads_tup)
-    |> Misc.wrap_app({lpad <> @cell_join , @board_bg <> rpad})
+    |> Utils.wrap_app({lpad <> @cell_join , @board_bg <> rpad})
   end
   # ┌──┬──┐   ┏━━┳━━┓   ╔══╦══╗ 
   # │  │  │   ┃  ┃  ┃   ║  ║  ║ 

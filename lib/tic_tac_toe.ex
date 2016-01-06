@@ -8,7 +8,7 @@ defmodule TicTacToe do
 
   def start(turn_tup = {next_up, on_deck}, board_size) do
     turn_tup
-    |> Misc.wrap_app(board_size * board_size)
+    |> Utils.wrap_app(board_size * board_size)
     |> Computer.start_link
 
     next_up
@@ -47,12 +47,12 @@ defmodule TicTacToe do
     |> Enum.reduce_while({[], blink_chunks(prompt)}, fn
       (_fun_tup, {final_rev_chars, []})->
         final_rev_chars
-        |> Misc.wrap_pre(:halt)
+        |> Utils.wrap_pre(:halt)
 
       ({color, int}, {rev_chars, [next_char | rem_chars]})->
-        [Misc.cap(color, int, next_char) | rev_chars]
-        |> Misc.wrap_app(rem_chars)
-        |> Misc.wrap_pre(:cont)
+        [Utils.cap(color, int, next_char) | rev_chars]
+        |> Utils.wrap_app(rem_chars)
+        |> Utils.wrap_pre(:cont)
     end)
   end
 
