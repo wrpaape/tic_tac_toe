@@ -10,7 +10,7 @@ defmodule TicTacToe.Player do
   @invalid_prompt ANSI.red       <> "\n\ninvalid move: "                <> ANSI.blink_slow
   @warning_prompt ANSI.blink_off <> "\n\nplease select from:\n\n  " <> ANSI.yellow
 
-  def next_move(board, valid_moves, _win_state) do
+  def next_move(board, valid_moves) do
     move =
       board <> @select_prompt
       |> IO.gets
@@ -30,6 +30,6 @@ defmodule TicTacToe.Player do
     move
     |> inspect
     |> Misc.cap(board <> @invalid_prompt, valid_moves_prompt)
-    |> next_move(valid_moves, nil)
+    |> next_move(valid_moves)
   end
 end

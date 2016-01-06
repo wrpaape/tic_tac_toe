@@ -1,13 +1,18 @@
 defmodule TicTacToe do
   alias IO.ANSI
   alias TicTacToe.Board
+  alias TicTacToe.Computer
 
   require Misc
 
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
 
-  def start({next_up, on_deck}) do
+  def start(turn_tup = {next_up, on_deck}, board_size) do
+    turn_tup
+    |> Misc.wrap_app(board_size * board_size)
+    |> Computer.start_link
+
     next_up
     |> next_move(on_deck)
     |> game_over

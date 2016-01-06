@@ -5,22 +5,58 @@ defmodule TicTacToe.Computer do
 
   @cursor Misc.get_config(:cursor)
   @prompt "computer move:" <> @cursor
-  @max_moves Misc.get_config(:max_board_size)
-    |> Misc.int_pow(2)
-  # @fact_cache 0..(:max_board_size |> Misc.get_config |> Misc.
-  #   |> Misc.int_pow(2)
-  #   |> Range.new(0)
-  #   |> Enum.rev
-  #   |> Enum.to_list
-  #   |> List.foldr(%{0 => 1}, &Map.put(&2, &1, &1 * &2[&1 - 1]))
+  @max_moves Misc.get_config(:max_board_size) |> Misc.int_pow(2)
+
+  def start_link(game_info), do: GenServer.start_link(__MODULE__, game_info, name: __MODULE__)
+
+  def next_move(board_tup),  do: GenServer.call(__MODULE__, {:next_move, board_tup})
+
+  def state,                 do: GenServer.call(__MODULE__, :state)
 
 
-  def start_link(opening_move_tup), do: GenServer.start_link(__MODULE__, opening_move_tup, name: __MODULE__)
+  # external api ^
 
-  def state,                  do: GenServer.call(__MODULE__, :state)
+  def init({}, rem_cells}) do
 
-  def init(board_size, turn_offset) do
-    1
+  def init({turn_tup, rem_cells}) do
+    {computer_char, player_char, turn_offset} =
+      turn_tup
+      |> case  do
+        {{__MODULE__, {_, comp}}, {_, {_, player}}} -> {comp, player, 0}
+
+        {{_, {_, player}}, {__MODULE__, {_, comp}}} -> {comp, player, 1}
+          
+      end
+
+    {:ok, {computer_char, player_char, build_fact_sequence(rem_cells - turn_offset)}}
+  end
+
+  def handle_call(:state, _from, state), do: {:ok, state, state}
+
+  def handle_call({:next_move, {board, valids, win_state}}, _from, {c_char, p_char, [fact | rem_facts]}) do
+    board <> @prompt
+    |> IO.write
+
+    move = Enum.random(valids)
+
+    IO.puts move
+
+    {:reply, move, {c_char, p_char, rem_facts}}
+  end
+
+  def next_move() do
+    valid_moves
+    |> Enum.each(fn(move)->
+      
+      
+    end)
+
+  end
+
+  # helpers v
+
+  defp build_fact_sequence(open_rem_cells) do
+    1..up_to
     |> Range.new(board_size * board_size - turn_offset)
     |> Enum.scan(&(&1 * &2))
     |> Enum.reverse
@@ -28,15 +64,4 @@ defmodule TicTacToe.Computer do
     |> Mis.wrap_pre(:ok)
   end
 
-  def next_move(valid_moves, win_state) do
-    valid_moves
-    |> Enum.each(fn(move)->
-      
-      
-    end)
-
-    # @prompt
-    # |> IO.gets
-    # |> String.first
-  end
 end

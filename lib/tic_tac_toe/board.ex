@@ -1,6 +1,7 @@
 defmodule TicTacToe.Board do
   use GenServer
   
+  alias TicTacToe.Board.Computer
   alias TicTacToe.Board.Printer
   alias TicTacToe.Board.StateMapBuilder
 
@@ -32,19 +33,20 @@ defmodule TicTacToe.Board do
   def handle_call({:next_move, {player, token = {_, char}}}, _from, state = {valid_moves, win_state}) do
     next_move =
       player
-      |> apply(:next_move, [Printer.print, valid_moves, win_state])
-      
+      |> apply_next_move(Printer.print, valid_moves, win_state)
+
     next_move
     |> Printer.update(token)
 
     next_move
     |> next_win_state(char, win_state)
     |> case do
-      {:game_over, go_msg} ->
-        Printer.print
-        |> IO.write
-
-        {:stop, :normal, go_msg, state}
+      # {:game_over, go_msg} ->
+        # Printer.print
+        # |> IO.write
+# {:game_over, var!(char) <> " W I N S !"}
+# {:game_over, "C A T ' S   G A M E"}
+        # {:stop, :normal, go_msg, state}
 
       next_win_state -> 
         {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}
@@ -69,7 +71,8 @@ defmodule TicTacToe.Board do
       |> Set.delete(var!(move))
       |> case do
         %HashSet{size: ^var!(size)} -> push_next(var!(info))
-        %HashSet{size: 0}           -> {:game_over, var!(char) <> " W I N S !"}
+        # %HashSet{size: 0}           -> {:game_over, var!(char) <> " W I N S !"}
+        %HashSet{size: 0}           -> 1
         next_win_set                -> push_next({next_win_set, var!(char)})
       end
     end
@@ -90,7 +93,19 @@ defmodule TicTacToe.Board do
     |> if do: recurse(acc_state), else: push_next(occ_info)
   end
 
-  def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}
+  # def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}
+  def next_info(_move, _token, [], []),             do: 0
   def next_info(_move, _token, [], next_win_state), do: next_win_state
+
+
+  defp apply_next_move(Computer, board, valid_moves, win_state) do
+    {board, valid_moves, win_state}
+    |> Computer.next_move
+  end
+
+  defp apply_next_move(Player, board, valid_moves, _) do
+    board
+    |> Player.next_move(valid_moves)
+  end
 end
 
