@@ -80,7 +80,7 @@ defmodule TicTacToe.Board.StateMapBuilder do
       move
       |> Board.next_win_state(token, win_state)
       |> case do
-        end_game when is_number(end_game) -> 
+        end_game when is_integer(end_game) -> 
           collector_pid
           |> send({:record, turn})
 

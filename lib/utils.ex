@@ -1,7 +1,40 @@
-defmodule Misc do
+defmodule Utils do
   alias IO.ANSI
+  alias Mix.Project
+
+  import Mix.Utils, only: [underscore: 1]
 
   def get_config(key), do: Application.get_env(:tic_tac_toe, key)
+
+  def app_name(module) do
+    module
+    |> Module.split
+    |> hd
+    |> underscore
+    |> String.to_atom
+  end
+
+  def project_parent_dir do
+    ".."
+    |> List.duplicate(5)
+    |> Path.join
+    |> Path.expand(Mix.Project.app_path)
+  end
+
+  defmacro module_path do
+    quote do
+      __MODULE__
+      |> underscore
+      |> Path.expand(unquote(project_parent_dir))
+    end
+  end
+
+  def get_config(key) do
+    Project.get
+    |> Mix.Utils.underscore
+    |> String.to_atom
+    |> Application.get_env(key)
+  end
 
   def int_pow(x, n), do: x |> :math.pow(n) |> trunc
 

@@ -3,8 +3,6 @@ defmodule TicTacToe do
   alias TicTacToe.Board
   alias TicTacToe.Computer
 
-  require Misc
-
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
 
