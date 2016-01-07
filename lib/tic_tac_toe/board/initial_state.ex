@@ -92,7 +92,6 @@ defmodule TicTacToe.Board.InitialState do
   def do_merge(rem_go_hists, branch_hist) do
     {gos_this_turn, next_child_hists} =
       rem_go_hists
-      # |> IO.inspect
       |> Enum.reduce({0, []}, fn
         ([head | tail], {gos_this_turn, next_child_hists})->
           {gos_this_turn + head, [tail | next_child_hists]}
@@ -115,8 +114,6 @@ defmodule TicTacToe.Board.InitialState do
   end
 
   def collect({gos_this_turn, acc_go_hist}, rem_branches, parent_pid) do
-    IO.inspect rem_branches
-
     receive do
       :game_over ->
         {gos_this_turn + 1, acc_go_hist}
@@ -149,6 +146,8 @@ defmodule TicTacToe.Board.InitialState do
 
       {[move | before_move], after_move}
     end)
+
+    # exit(:kill)
   end
 
   def num_possible_outcomes_by_turn(win_state, valid_moves) do
