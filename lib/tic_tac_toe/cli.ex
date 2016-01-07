@@ -46,7 +46,7 @@ defmodule TicTacToe.CLI do
       @coin_flip_prompt
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {:app, "first"}, else: {:pre, "second"}
+      |> if(do: {:app, "first"}, else: {:pre, "second"})
 
     {valids, move_set_str} =
       @move_sets

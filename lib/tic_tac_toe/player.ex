@@ -17,7 +17,7 @@ defmodule TicTacToe.Player do
 
     valid_moves
     |> Enum.member?(move)
-    |> if do: move, else: redo(move, valid_moves, board)
+    |> if(do: move, else: redo(move, valid_moves, board))
   end
 
   def redo(move, valid_moves, board) do

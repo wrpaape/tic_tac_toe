@@ -40,7 +40,7 @@ defmodule TicTacToe.Board.EndGame do
     occ_info
     |> elem(0)
     |> Set.member?(move)
-    |> if do: recurse(acc_state), else: push_next(occ_info)
+    |> if(do: recurse(acc_state), else: push_next(occ_info))
   end
 
   # def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}

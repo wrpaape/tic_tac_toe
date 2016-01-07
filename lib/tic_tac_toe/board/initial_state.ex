@@ -4,15 +4,11 @@ defmodule TicTacToe.Board.InitialState do
   alias TicTacToe.Board.EndGame
   
   @dir             Utils.module_path
-  @fun_names      ~w(valid_moves win_state move_map move_cells)a
+  @fun_names      ~w(valid_moves win_state outcome_counts move_map move_cells)a
   @min_board_size  Utils.get_config(:min_board_size)
   @max_board_size  Utils.get_config(:max_board_size)
   @move_lists      Utils.get_config(:move_lists)
   @max_num_cells   @max_board_size * @max_board_size
-  @timeout         1000
-  @factorial_cache 1..@max_board_size
-    |> Enum.scan(&(&1 * &2))
-    |> Enum.reverse
 
   def get(size) do
     size_module =
@@ -55,16 +51,17 @@ defmodule TicTacToe.Board.InitialState do
       row_chunks
       |> win_lists
 
-    # outcome_counts =
-    #   valid_moves
-    #   |> num_possible_outcomes_by_turn(win_state)
+    outcome_counts =
+      win_state
+      |> Enum.map(&Enum.into(&1, HashSet.new))
+      |> num_possible_outcomes_by_turn(valid_moves)
 
     {move_cells, move_map} =
       row_chunks
       |> printer_tup
 
     file_content =
-      [valid_moves, win_state, move_cells, move_map]
+      [valid_moves, win_state, outcome_counts, move_cells, move_map]
       |> Enum.map_reduce(@fun_names, fn(content, [name | rem_names])->
         content
         |> inspect(pretty: true, as_lists: true) 
@@ -90,111 +87,54 @@ defmodule TicTacToe.Board.InitialState do
     |> File.write(file_content)
   end
 
-  def collector(root_pid) do
-    countdown = fn ->
-      @timeout
-      |> :timer.send_after({:return, root_pid})
-      |> elem(1)
-    end
-
-    Map.new
-    |> collect(countdown.(), countdown)
-  end
-
-  # def collect(results, tref, countdown) do
-  #   receive do
-  #     {:return, root_pid} ->
-  #       root_pid
-  #       |> send(results)
-
-  #     {:record, turn} ->
-  #       tref
-  #       |> :timer.cancel
-
-  #       results
-  #       |> Map.update(turn, 1, &(&1 + 1))
-  #       |> collect(countdown.(), countdown)
-  #   end
-  # end
-
-  # def recurse(rem_moves, token, win_state, turn, collector_pid) do
-  #   rem_moves
-  #   |> Enum.reduce({[], tl(rem_moves)}, fn(move, {other_before, other_after})->
-  #     move
-  #     |> Board.next_win_state(token, win_state)
-  #     |> case do
-  #       end_game when is_integer(end_game) -> 
-  #         collector_pid
-  #         |> send({:record, turn})
-
-  #       next_win_state ->
-  #         __MODULE__
-  #         |> spawn(:recurse, [other_before ++ other_after, not token, next_win_state, turn + 1, collector_pid])
-  #     end
-
-  #     {[move | other_before], tl(other_after)}
-  #   end)
-  # end
-
-  # def num_possible_outcomes_by_turn(valid_moves, win_state) do
-  #   collector_pid =
-  #     __MODULE__
-  #     |> spawn(:collector, [self])
-
-  #   __MODULE__
-  #   |> spawn(:recurse, [valid_moves, true, win_state, 1, collector_pid])
-
-  #   receive do
-  #     results -> 
-  #       results
-  #       |> Enum.sort(&>=/2)
-  #       |> Enum.map(&elem(&1, 1))
-      
-  #     # after 5000 -> throw("taking too long")
-  #   end
-  # end
-
-  def merge_branch([], branch_hist),         do: Enum.reverse(branch_hist)
-  def merge_branch(child_hists, branch_hist) do
+  def do_merge([], branch_hist),                      do: Enum.reverse(branch_hist)
+  def do_merge([[] | next_child_hists], branch_hist), do: do_merge(next_child_hists, branch_hist)
+  def do_merge(rem_go_hists, branch_hist) do
     {gos_this_turn, next_child_hists} =
-      child_hists
-      |> Enum.reduce({0, []},fn
-        ({gos_this_turn, next_child_hists}, [head | tail]})->
+      rem_go_hists
+      # |> IO.inspect
+      |> Enum.reduce({0, []}, fn
+        ([head | tail], {gos_this_turn, next_child_hists})->
           {gos_this_turn + head, [tail | next_child_hists]}
 
-        (acc_tup, []})->
+        ([], acc_tup)->
           acc_tup
       end)
 
     next_child_hists
-    |> merge_branch([gos_this_turn | branch_hist])
+    |> do_merge([gos_this_turn | branch_hist])
   end
 
-  def collect(gos_this_turn, acc_go_hist, 0, parent_pid) do
+  def collect({gos_this_turn, acc_go_hist}, 0, parent_pid) do
     branch_go_hist = 
-      branch_go_hist
-      |> merge_branch([gos_this_turn])
+      acc_go_hist
+      |> do_merge([gos_this_turn])
 
     parent_pid
-    |> send({:game_over_history, go_hist})
+    |> send({:game_over_history, branch_go_hist})
   end
 
-  def collect(gos_this_turn, acc_go_hist, rem_branches, parent_pid) do
+  def collect({gos_this_turn, acc_go_hist}, rem_branches, parent_pid) do
+    IO.inspect rem_branches
+
     receive do
-      :game_over
-        gos_this_turn
-        |> + 1
-        |> collect(acc_go_hist, rem_branches - 1, parent_pid)
+      :game_over ->
+        {gos_this_turn + 1, acc_go_hist}
 
       {:game_over_history, child_go_hist} ->
-        gos_this_turn
-        |> collect([child_go_hist | acc_go_hist], rem_branches - 1, parent_pid)
+        {gos_this_turn, [child_go_hist | acc_go_hist]}
     end
+    |> collect(rem_branches - 1, parent_pid)
   end
 
-  def recurse(rem_moves, num_rem, token, win_state, turn, collector_pid) do
+  # def recurse([_], _, _, _, parent_pid),                      do: send(parent_pid, :game_over)
+  def recurse(rem_moves, num_rem, token, win_state, parent_pid) do
+    collector_pid =
+      __MODULE__
+      |> spawn(:collect, [{0, []}, num_rem, parent_pid])
+
     rem_moves
-    |> Enum.reduce({[], tl(rem_moves)}, fn(move, {other_before, other_after})->
+    |> Enum.reduce({[], rem_moves}, fn(_move, {before_move, [move | after_move]})->
       move
       |> EndGame.next_win_state(token, win_state)
       |> case do
@@ -204,28 +144,29 @@ defmodule TicTacToe.Board.InitialState do
 
         next_win_state ->
           __MODULE__
-          |> spawn(:recurse, [other_before ++ other_after, num_rem - 1, not token, next_win_state, collector_pid])
+          |> spawn(:recurse, [before_move ++ after_move, num_rem - 1, not token, next_win_state, collector_pid])
       end
 
-      {[move | other_before], tl(other_after)}
+      {[move | before_move], after_move}
     end)
   end
 
-  def num_possible_outcomes_by_turn(valid_moves, win_state) do
+  def num_possible_outcomes_by_turn(win_state, valid_moves) do
     num_rem =
       valid_moves
       |> length
 
     collector_pid =
       __MODULE__
-      |> spawn(:collect, [0, [], num_rem, self])
+      |> spawn(:collect, [{0, []}, 1, self])
 
     __MODULE__
-    |> spawn(:recurse, [valid_moves, num_rem, true, win_state, 1, collector_pid])
+    |> spawn(:recurse, [valid_moves, num_rem, true, win_state, collector_pid])
 
     receive do
       {:game_over_history, game_over_history} ->
         game_over_history
+        |> IO.inspect
     end
   end
 

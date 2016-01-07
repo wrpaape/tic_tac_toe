@@ -1,7 +1,6 @@
 defmodule TicTacToe.Board.EndGame do
   
   def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
-
   # external API ^
 
   # helpers v
@@ -47,15 +46,4 @@ defmodule TicTacToe.Board.EndGame do
   # def next_info(_move, _token, [], []),             do: {:game_over, "C A T ' S   G A M E"}
   def next_info(_move, _token, [], []),             do: 0
   def next_info(_move, _token, [], next_win_state), do: next_win_state
-
-
-  defp apply_next_move(Computer, board, valid_moves, win_state) do
-    {board, valid_moves, win_state}
-    |> Computer.next_move
-  end
-
-  defp apply_next_move(Player, board, valid_moves, _) do
-    board
-    |> Player.next_move(valid_moves)
-  end
 end

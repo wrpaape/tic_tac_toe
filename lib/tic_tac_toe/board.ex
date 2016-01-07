@@ -1,10 +1,7 @@
 defmodule TicTacToe.Board do
   use GenServer
 
-  alias TicTacToe.Board.EndGame
-  alias TicTacToe.Board.InitialState
-  alias TicTacToe.Board.Computer
-  alias TicTacToe.Board.Printer
+  alias __MODULE__.{EndGame, InitialState, Computer, Printer}
 
   def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 

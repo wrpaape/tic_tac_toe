@@ -4,15 +4,15 @@ defmodule TicTacToe.CLI do
   alias TicTacToe.Computer
   alias TicTacToe.Player
   
-  require Misc
+  require Utils
 
-  @colors     Misc.get_config(:colors)
-  @min        Misc.get_config(:min_board_size)
-  @max        Misc.get_config(:max_board_size)
-  @def        Misc.get_config(:def_board_size)
-  @move_sets  Misc.get_config(:move_sets)
-  @colors     Misc.get_config(:token_colors)
-  @cursor     Misc.get_config(:cursor)
+  @colors     Utils.get_config(:colors)
+  @min        Utils.get_config(:min_board_size)
+  @max        Utils.get_config(:max_board_size)
+  @def        Utils.get_config(:def_board_size)
+  @move_sets  Utils.get_config(:move_sets)
+  @colors     Utils.get_config(:token_colors)
+  @cursor     Utils.get_config(:cursor)
 
   @coin_flip_prompt ANSI.clear <> "heads or tails (h/t)?" <> @cursor
   @selection_prompt "choose a valid token character:\n(printable, not whitespace, and not present in the moveset below)\n"
@@ -46,18 +46,18 @@ defmodule TicTacToe.CLI do
       @coin_flip_prompt
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if do: {:app, "first"}, else: {:pre, "second"}
+      |> if(do: {:app, "first"}, else: {:pre, "second"})
 
     {valids, move_set_str} =
       @move_sets
       |> Map.get(board_size)
 
     turn_str
-    |> Misc.cap(ANSI.clear <> "you will have the ", " move.\n\n")
+    |> Utils.cap(ANSI.clear <> "you will have the ", " move.\n\n")
     |> IO.write
 
     move_set_str
-    |> Misc.cap(@selection_prompt, @cursor)
+    |> Utils.cap(@selection_prompt, @cursor)
     |> assign_tokens(wrap_dir, valids)
     |> TicTacToe.start
   end
@@ -79,7 +79,7 @@ defmodule TicTacToe.CLI do
   defp coin_flip_reg do
     ~w(h t)
     |> Enum.random
-    |> Misc.str_pre("^")
+    |> Utils.str_pre("^")
     |> Regex.compile!("i")
   end
 
@@ -99,14 +99,14 @@ defmodule TicTacToe.CLI do
       valids
       |> Set.delete(char)
       |> Enum.random
-      |> Misc.wrap_pre(computer_color)
-      # |> Misc.wrap_pre(Computer)
-      |> Misc.wrap_pre(Player)
-      |> Misc.wrap({Player, {player_color, char}}, wrap_dir)
+      |> Utils.wrap_pre(computer_color)
+      # |> Utils.wrap_pre(Computer)
+      |> Utils.wrap_pre(Player)
+      |> Utils.wrap({Player, {player_color, char}}, wrap_dir)
     else
       char
       |> inspect
-      |> Misc.cap(@invalid_prompt, ANSI.reset <> "\n\n")
+      |> Utils.cap(@invalid_prompt, ANSI.reset <> "\n\n")
       |> IO.write
 
       prompt
@@ -116,7 +116,7 @@ defmodule TicTacToe.CLI do
 
   defp alert(msg, color \\ :red) do
     msg   
-    |> Misc.cap_reset(color)
+    |> Utils.cap_reset(color)
     |> IO.write
 
     System.halt(0)

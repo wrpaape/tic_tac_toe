@@ -1,9 +1,7 @@
 defmodule TicTacToe.Board do
   use GenServer
-  
-  alias TicTacToe.Board.Computer
-  alias TicTacToe.Board.Printer
-  alias TicTacToe.Board.InitialState
+
+  alias __MODULE__.{EndGame, InitialState, Computer, Printer}
 
   def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 
@@ -35,7 +33,7 @@ defmodule TicTacToe.Board do
     |> Printer.update(token)
 
     next_move
-    |> next_win_state(char, win_state)
+    |> EndGame.next_win_state(char, win_state)
     |> case do
       # {:game_over, go_msg} ->
         # Printer.print
