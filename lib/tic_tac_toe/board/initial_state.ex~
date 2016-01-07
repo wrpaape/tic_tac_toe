@@ -4,6 +4,7 @@ defmodule TicTacToe.Board.InitialState do
   alias TicTacToe.Board.EndGame
   
   @dir             Utils.module_path
+  @fun_names      ~w(valid_moves win_state move_map move_cells)a
   @min_board_size  Utils.get_config(:min_board_size)
   @max_board_size  Utils.get_config(:max_board_size)
   @move_lists      Utils.get_config(:move_lists)
@@ -14,73 +15,80 @@ defmodule TicTacToe.Board.InitialState do
     |> Enum.reverse
 
   def get(size) do
-    __MODULE__
-    |> Module.safe_concat("BoardSize" <> Integer.to_string(size))
-    |> apply(:get, [])
+    size_module =
+      __MODULE__
+      |> Module.concat("BoardSize" <> Integer.to_string(size))
+
+    @fun_names
+    |> Enum.map(&{&1, apply(size_module, &1, [])})
   end
 
-  # def size_module, do: Module.concat(__MODULE__, "BoardSize" <> Integer.to_string(size))
+  def clean do
+   @dir 
+   |> Path.join("**")
+   |> Path.wildcard
+   |> Enum.each(&File.rm_rf!/1)
+  end
 
   def build do
     @min_board_size..@max_board_size
-    |> Enum.each(fn(board_size)->
-      num_cells = board_size * board_size
-
-      valid_moves =
-        @move_lists
-        |> Map.get_lazy(board_size, fn ->
-          num_cells
-          |> default_move_list
-        end)
-
-      row_chunks =
-        valid_moves
-        |> Enum.chunk(board_size)
-
-      win_state =
-        row_chunks
-        |> win_lists
-
-      # outcome_counts =
-      #   valid_moves
-      #   |> num_possible_outcomes_by_turn(win_state)
-
-      {move_cells, move_map} =
-        row_chunks
-        |> printer_tup
-
-      file_contents =
-        [valid_moves: valid_moves,
-         win_state:   win_state,
-         # outcome_counts: outcome_counts,
-         move_cells:  move_cells,
-         move_map:    move_map]
-         |> Enum.map(fn({name, contents})->
-           contents
-           |> inspect(pretty: true, as_lists: true) 
-           |> Utils.wrap_pre(name)
-         end)
-         |> Keyword.update!(:win_state, &(&1 <> "\n|> Enum.map(&Enum.into(&1, HashSet.new))"))
-         |> Enum.map_join("\n\n", fn({name, contents})->
-           contents
-           |> String.replace(~r/(?<=\n)/, "    ")
-           |> Utils.cap("  defp #{name} do\n", "\n  end")
-         end)
-         |> Utils.str_pre("  def get do\n    {valid_moves, win_state, move_map, move_cells}\n  end")
-         |> Utils.cap("defmodule #{__MODULE__}.BoardSize#{board_size} do\n", "\nend")
-
-      file_name =
-        board_size
-        |> Integer.to_string
-        |> Utils.cap("board_size_", ".ex")
-
-      @dir
-      |> Path.join(file_name)
-      |> File.write!(file_contents)
-    end)
+    |> Enum.each(&build_state/1)
   end
 
   #external API ^
+
+  def build_state(board_size) do
+    num_cells = board_size * board_size
+
+    valid_moves =
+      @move_lists
+      |> Map.get_lazy(board_size, fn ->
+        num_cells
+        |> default_move_list
+      end)
+
+    row_chunks =
+      valid_moves
+      |> Enum.chunk(board_size)
+
+    win_state =
+      row_chunks
+      |> win_lists
+
+    # outcome_counts =
+    #   valid_moves
+    #   |> num_possible_outcomes_by_turn(win_state)
+
+    {move_cells, move_map} =
+      row_chunks
+      |> printer_tup
+
+    file_content =
+      [valid_moves, win_state, move_cells, move_map]
+      |> Enum.map_reduce(@fun_names, fn(content, [name | rem_names])->
+        content
+        |> inspect(pretty: true, as_lists: true) 
+        |> Utils.wrap_pre(name)
+        |> Utils.wrap_app(rem_names)
+      end)
+      |> elem(0)
+      |> Keyword.update!(:win_state, &(&1 <> "\n|> Enum.map(&Enum.into(&1, HashSet.new))"))
+      |> Enum.map_join("\n\n", fn({name, content})->
+        content
+        |> String.replace(~r/^/m, "    ")
+        |> Utils.cap("  def #{name} do\n", "\n  end")
+      end)
+      |> Utils.cap("defmodule #{__MODULE__}.BoardSize#{board_size} do\n", "\nend")
+
+    file_name =
+      board_size
+      |> Integer.to_string
+      |> Utils.cap("board_size_", ".ex")
+
+    @dir
+    |> Path.join(file_name)
+    |> File.write(file_content)
+  end
 
   def collector(root_pid) do
     countdown = fn ->
@@ -136,7 +144,6 @@ defmodule TicTacToe.Board.InitialState do
     __MODULE__
     |> spawn(:recurse, [valid_moves, true, win_state, 1, collector_pid])
 
-
     receive do
       results -> 
         results
@@ -177,34 +184,6 @@ defmodule TicTacToe.Board.InitialState do
     {rows, move_map}
   end
 
-  # def win_sets(row_chunks) do
-  #   rows =
-  #     row_chunks
-  #     |> Enum.map(&Enum.into(&1, HashSet.new))
-
-  #   rows_cols =
-  #     row_chunks
-  #     |> List.zip
-  #     |> Enum.reduce(rows, fn(chunk_tup, rows_cols)->
-  #       chunk_tup 
-  #       |> Tuple.to_list
-  #       |> Enum.into(HashSet.new)
-  #       |> Utils.push_in(rows_cols)
-  #     end)
-
-  #   row_chunks
-  #   |> Enum.reduce([{HashSet.new, 0, 1}, {HashSet.new, -1, -1}], fn(chunk, diag_tups)->
-  #     diag_tups
-  #     |> Enum.map(fn({diag, at, inc})->
-  #       diag
-  #       |> Set.put(Enum.at(chunk, at)) 
-  #       |> Utils.wrap_app(at + inc)
-  #       |> Tuple.append(inc)
-  #     end)
-  #   end)
-  #   |> Enum.reduce(rows_cols, &[elem(&1, 0) | &2])
-  # end
-
   def win_lists(cell_chunk = [[_]]), do: cell_chunk
   def win_lists(row_chunks)          do
     ~w(rows_and_columns diagonals)a
@@ -235,7 +214,7 @@ defmodule TicTacToe.Board.InitialState do
     |> Enum.map(&elem(&1, 0))
   end
 
-  defp default_move_list(num_cells) do
+  def default_move_list(num_cells) do
     0..(num_cells - 1)
     |> Enum.map(fn(int)->
       int
@@ -243,12 +222,5 @@ defmodule TicTacToe.Board.InitialState do
       |> String.slice(2..-1)
       |> String.downcase
     end)
-  end
-
-  def clean do
-   @dir 
-   |> Path.join("**")
-   |> Path.wildcard
-   |> Enum.each(&File.rm_rf!/1)
   end
 end

@@ -11,7 +11,8 @@ defmodule Utils do
 
   def project_parent_dir do
     ".."
-    |> List.duplicate(5)
+    |> List.duplicate(4)
+    |> List.insert_at(-1, "lib")
     |> Path.join
     |> Path.expand(Mix.Project.app_path)
   end
