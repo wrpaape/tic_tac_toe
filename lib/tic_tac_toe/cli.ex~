@@ -1,8 +1,6 @@
 defmodule TicTacToe.CLI do
   alias IO.ANSI
-  alias TicTacToe.Board
-  alias TicTacToe.Computer
-  alias TicTacToe.Player
+  alias TicTacToe.{Board, Computer, Player}
   
   require Utils
 
@@ -16,7 +14,7 @@ defmodule TicTacToe.CLI do
 
   @coin_flip_prompt ANSI.clear <> "heads or tails (h/t)?" <> @cursor
   @selection_prompt "choose a valid token character:\n(printable, not whitespace, and not present in the moveset below)\n"
-  @invalid_prompt   ANSI.clear <> ANSI.red <> "invalid token: " <> ANSI.blink_slow
+  @invalid_prompt   ANSI.clear <> ANSI.red <> ANSI.blink_slow <> "invalid token: " <> ANSI.blink_off
 
   @parse_opts [
     switches: [help: :boolean],
@@ -66,11 +64,9 @@ defmodule TicTacToe.CLI do
     argv
     |> OptionParser.parse(@parse_opts)
     |> case do
-      {[help: true], _, _ }  -> :help
-       
-      {_, [], _}             -> @def
- 
+      {[help: true],  _,  _} -> :help
       {_, [size_str | _], _} -> Integer.parse(size_str)
+      ______________________ -> @def
     end
   end
 
@@ -123,5 +119,4 @@ defmodule TicTacToe.CLI do
   end
 
   defp seed, do: {:erlang.phash2(node), :erlang.monotonic_time, :erlang.unique_integer}
-
 end

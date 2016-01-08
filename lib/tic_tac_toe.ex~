@@ -9,13 +9,13 @@ defmodule TicTacToe do
     turn_tup
     |> case  do
       {{Computer, {_, comp}}, {Player, {_, player}}}   ->
-        [{comp, player}]
+        [{player, comp}]
 
       {{Player, {_, player}}, {Computer, {_, comp}}}   ->
-        [{comp, player}]
+        [{player, comp}]
 
       {{Computer, {_, comp1}}, {Computer, {_, comp2}}} ->
-        [{comp1, comp2}, {comp2, comp1}]
+        [{comp2, comp1}, {comp1, comp2}]
 
       _ -> []
     end

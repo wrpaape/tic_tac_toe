@@ -1,6 +1,6 @@
 defmodule TicTacToe.Board.EndGame do
   
-  def next_win_state(move, token, win_state), do: next_info(move, token, win_state, [])
+  def next_win_state(move, char, win_state), do: next_info(move, char, win_state, [])
   # external API ^
 
   # helpers v
