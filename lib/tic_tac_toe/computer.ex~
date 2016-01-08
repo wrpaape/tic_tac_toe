@@ -43,8 +43,8 @@ defmodule TicTacToe.Computer do
   end
 
   def do_branch(0,    _,    _,  _,    _,   _),   do: 0
-  def do_branch(1,    me,   me, them, _,   _),   do: -1
-  def do_branch(1,    them, me, them, _,   _),   do: 1
+  def do_branch(1,    me,   me, them, _,   _),   do: 1
+  def do_branch(1,    them, me, them, _,   _),   do: -1
   def do_branch(wnst, me,   me, them, bef, aft), do: reduce_branch(wnst, them, me, them, bef ++ aft)
   def do_branch(wnst, them, me, them, bef, aft), do: reduce_branch(wnst, me,   me, them, bef ++ aft)
 
@@ -66,7 +66,6 @@ defmodule TicTacToe.Computer do
       move
       |> EndGame.next_win_state(me, win_state)
       |> do_branch(me, me, them, before_move, after_move) 
-      |> IO.inspect
 
     collector_pid
     |> send({branch_score, move})
@@ -77,8 +76,9 @@ defmodule TicTacToe.Computer do
   def collect({_, best_move}, 0, parent_pid),   do: send(parent_pid, best_move)
   def collect(last_best, rem_moves, parent_pid) do
     receive do
-      branch_sum ->
-        branch_sum 
+      move_sum ->
+        move_sum 
+        |> IO.inspect
         |> max(last_best)
         |> collect(rem_moves - 1, parent_pid)
     end

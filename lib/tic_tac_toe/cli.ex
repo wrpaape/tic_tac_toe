@@ -96,8 +96,8 @@ defmodule TicTacToe.CLI do
       |> Set.delete(char)
       |> Enum.random
       |> Utils.wrap_pre(computer_color)
-      # |> Utils.wrap_pre(Computer)
-      |> Utils.wrap_pre(Player)
+      |> Utils.wrap_pre(Computer)
+      # |> Utils.wrap_pre(Player)
       |> Utils.wrap({Player, {player_color, char}}, wrap_dir)
     else
       char
