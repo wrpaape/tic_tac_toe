@@ -64,7 +64,8 @@ token_colors =
   end)
 
 config :tic_tac_toe, [min_board_size: 1,
-                      max_board_size: 4,
+                      # max_board_size: 4,
+                      max_board_size: 3,
                       def_board_size: 3,
                       cursor:         ANSI.blink_slow <> "\n> " <> ANSI.reset,
                       token_colors:   token_colors,

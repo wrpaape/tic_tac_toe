@@ -3,11 +3,13 @@ defmodule TicTacToe.Board.InitialState do
 
   alias TicTacToe.Board.EndGame
   
+# iex --erl "+P 10000000" -S mix
+
   @dir             Utils.module_path
-  @fun_names      ~w(valid_moves win_state outcome_counts move_map move_cells)a
   @min_board_size  Utils.get_config(:min_board_size)
   @max_board_size  Utils.get_config(:max_board_size)
   @move_lists      Utils.get_config(:move_lists)
+  @fun_names      ~w(valid_moves win_state outcome_counts move_map move_cells)a
   @max_num_cells   @max_board_size * @max_board_size
 
   def get(size) do
@@ -111,6 +113,8 @@ defmodule TicTacToe.Board.InitialState do
 
     parent_pid
     |> send({:game_over_history, branch_go_hist})
+
+    exit(:kill)
   end
 
   def collect({gos_this_turn, acc_go_hist}, rem_branches, parent_pid) do
@@ -147,7 +151,7 @@ defmodule TicTacToe.Board.InitialState do
       {[move | before_move], after_move}
     end)
 
-    # exit(:kill)
+    exit(:kill)
   end
 
   def num_possible_outcomes_by_turn(win_state, valid_moves) do
@@ -155,12 +159,12 @@ defmodule TicTacToe.Board.InitialState do
       valid_moves
       |> length
 
-    collector_pid =
-      __MODULE__
-      |> spawn(:collect, [{0, []}, 1, self])
+    # collector_pid =
+    #   __MODULE__
+    #   |> spawn(:collect, [{0, []}, 1, self])
 
     __MODULE__
-    |> spawn(:recurse, [valid_moves, num_rem, true, win_state, collector_pid])
+    |> spawn(:recurse, [valid_moves, num_rem, true, win_state, self])
 
     receive do
       {:game_over_history, game_over_history} ->

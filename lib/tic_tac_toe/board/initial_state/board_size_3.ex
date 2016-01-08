@@ -10,7 +10,7 @@ defmodule Elixir.TicTacToe.Board.InitialState.BoardSize3 do
   end
 
   def outcome_counts do
-    [0, 0, 0, 0, 0, 1440, 5328, 47952, 95616, 104832]
+    [0, 0, 0, 0, 1440, 5328, 47952, 95616, 104832]
   end
 
   def move_map do
