@@ -40,16 +40,15 @@ defmodule TicTacToe.Board do
     next_move
     |> EndGame.next_win_state(char, win_state)
     |> case do
-      # {:game_over, go_msg} ->
-        # Printer.print
-        # |> IO.write
-# {:game_over, var!(char) <> " W I N S !"}
-# {:game_over, "C A T ' S   G A M E"}
-        # {:stop, :normal, go_msg, state}
-
-      next_win_state -> 
-        {:reply, :cont, {List.delete(valid_moves, next_move), next_win_state}}
+      0 -> {:tie, []}
+      1 -> {:win, []} 
+      next_win_state -> {:cont, next_win_state}
     end
+    |> reply_next(List.delete(valid_moves, next_move))
+  end
+
+  def reply_next({msg, next_win_state}, next_valid_moves) do
+    {:reply, msg, {next_valid_moves, next_win_state}}
   end
 
   # helpers v

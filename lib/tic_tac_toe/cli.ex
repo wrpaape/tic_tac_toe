@@ -123,5 +123,4 @@ defmodule TicTacToe.CLI do
   end
 
   defp seed, do: {:erlang.phash2(node), :erlang.monotonic_time, :erlang.unique_integer}
-
 end

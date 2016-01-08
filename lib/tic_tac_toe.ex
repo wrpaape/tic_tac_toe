@@ -1,8 +1,6 @@
 defmodule TicTacToe do
   alias IO.ANSI
-  alias TicTacToe.Board
-  alias TicTacToe.Computer
-  alias TicTacToe.Player
+  alias TicTacToe.{Board, Computer, Player}
 
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
@@ -35,13 +33,21 @@ defmodule TicTacToe do
     |> Board.next_move
     |> case do
       :cont  -> next_move(on_deck, next_up)
-      go_msg -> go_msg
+      :tie   -> fun_prompt("C A T ' S   G A M E")
+      :win   -> next_up
     end
+  end
+
+  defp game_over({Computer, token}), do: winner_prompt("C O M P U T E R ", token)
+  defp game_over({Player, token}),   do: winner_prompt("P L A Y E R ", token)
+
+  defp winner_prompt(player, {color, char}) do
+    [fun_prompt(player), color <> char <> ANSI.reset, fun_prompt(" W I N S !")]
+    |> game_over
   end
 
   defp game_over(go_msg) do
     go_msg
-    |> fun_prompt
     |> Enum.each(fn(chunk)->
       chunk
       |> IO.write
