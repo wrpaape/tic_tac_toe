@@ -9,16 +9,16 @@ defmodule TicTacToe.Board.InitialState do
   @min_board_size  Utils.get_config(:min_board_size)
   @max_board_size  Utils.get_config(:max_board_size)
   @move_lists      Utils.get_config(:move_lists)
-  @fun_names      ~w(valid_moves win_state outcome_counts move_map move_cells)a
   @max_num_cells   @max_board_size * @max_board_size
+  # @fun_names      ~w(valid_moves win_state outcome_counts move_cells move_map)a
+  @fun_names      ~w(valid_moves win_state move_cells move_map)a
 
   def get(size) do
-    size_module =
+    mod =
       __MODULE__
       |> Module.concat("BoardSize" <> Integer.to_string(size))
 
-    @fun_names
-    |> Enum.map(&{&1, apply(size_module, &1, [])})
+    {{mod.move_map, mod.move_cells, size}, {mod.valid_moves, mod.win_state}}
   end
 
   def clean do
@@ -53,17 +53,18 @@ defmodule TicTacToe.Board.InitialState do
       row_chunks
       |> win_lists
 
-    outcome_counts =
-      win_state
-      |> Enum.map(&Enum.into(&1, HashSet.new))
-      |> num_possible_outcomes_by_turn(valid_moves)
+    # outcome_counts =
+    #   win_state
+    #   |> Enum.map(&Enum.into(&1, HashSet.new))
+    #   |> num_possible_outcomes_by_turn(valid_moves)
 
     {move_cells, move_map} =
       row_chunks
       |> printer_tup
 
     file_content =
-      [valid_moves, win_state, outcome_counts, move_cells, move_map]
+      # [valid_moves, win_state, outcome_counts, move_cells, move_map]
+      [valid_moves, win_state, move_cells, move_map]
       |> Enum.map_reduce(@fun_names, fn(content, [name | rem_names])->
         content
         |> inspect(pretty: true, as_lists: true) 
@@ -128,7 +129,6 @@ defmodule TicTacToe.Board.InitialState do
     |> collect(rem_branches - 1, parent_pid)
   end
 
-  # def recurse([_], _, _, _, parent_pid),                      do: send(parent_pid, :game_over)
   def recurse(rem_moves, num_rem, token, win_state, parent_pid) do
     collector_pid =
       __MODULE__
@@ -159,17 +159,11 @@ defmodule TicTacToe.Board.InitialState do
       valid_moves
       |> length
 
-    # collector_pid =
-    #   __MODULE__
-    #   |> spawn(:collect, [{0, []}, 1, self])
-
     __MODULE__
     |> spawn(:recurse, [valid_moves, num_rem, true, win_state, self])
 
     receive do
-      {:game_over_history, game_over_history} ->
-        game_over_history
-        |> IO.inspect
+      {:game_over_history, game_over_history} -> game_over_history
     end
   end
 

@@ -2,14 +2,26 @@ defmodule TicTacToe do
   alias IO.ANSI
   alias TicTacToe.Board
   alias TicTacToe.Computer
+  alias TicTacToe.Player
 
   @colors      ~w(red yellow green blue cyan magenta)a
   @intensities ~w(bright normal faint normal)a
 
-  def start(turn_tup = {next_up, on_deck}, board_size) do
+  def start(turn_tup = {next_up, on_deck}) do
     turn_tup
-    |> Utils.wrap_app(board_size * board_size)
-    |> Computer.start_link
+    |> case  do
+      {{Computer, {_, comp}}, {Player, {_, player}}}   ->
+        [{comp, player}]
+
+      {{Player, {_, player}}, {Computer, {_, comp}}}   ->
+        [{comp, player}]
+
+      {{Computer, {_, comp1}}, {Computer, {_, comp2}}} ->
+        [{comp1, comp2}, {comp2, comp1}]
+
+      _ -> []
+    end
+    |> Enum.each(&Computer.start_link/1)
 
     next_up
     |> next_move(on_deck)

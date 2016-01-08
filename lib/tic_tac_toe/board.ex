@@ -1,7 +1,12 @@
 defmodule TicTacToe.Board do
   use GenServer
 
-  alias __MODULE__.{EndGame, InitialState, Computer, Printer}
+  require Utils
+
+  @select_prompt " move:" <> Utils.get_config(:cursor)
+
+  alias __MODULE__.{EndGame, InitialState, Printer}
+  alias  TicTacToe.{Computer, Player}
 
   def start_link(board_size), do: GenServer.start_link(__MODULE__, board_size, name: __MODULE__)
 
@@ -12,14 +17,14 @@ defmodule TicTacToe.Board do
   # external API ^
   
   def init(board_size) do
-    {valid_moves, win_state, outcome_counts, move_map, move_cells} =
+    {printer_tup, board_tup} =
       board_size
       |> InitialState.get
 
-    {move_map, move_cells, board_size}
+    printer_tup
     |> Printer.start_link
 
-    {:ok, {valid_moves, win_state}}
+    {:ok, board_tup}
   end
 
   def handle_call(:state, _from, state), do: {:reply, state, state}
@@ -50,13 +55,13 @@ defmodule TicTacToe.Board do
   # helpers v
 
   defp apply_next_move(Computer, board, valid_moves, win_state) do
-    {board, valid_moves, win_state}
+    {[board, "\n\ncomputer", @select_prompt], valid_moves, win_state}
     |> Computer.next_move
   end
 
   defp apply_next_move(Player, board, valid_moves, _) do
     board
-    |> Player.next_move(valid_moves)
+    |> Player.next_move(valid_moves, ["\n\nplayer", @select_prompt])
   end
 end
 

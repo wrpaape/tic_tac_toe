@@ -8,15 +8,11 @@ defmodule Elixir.TicTacToe.Board.InitialState.BoardSize1 do
     |> Enum.map(&Enum.into(&1, HashSet.new))
   end
 
-  def outcome_counts do
-    [1]
-  end
-
-  def move_map do
+  def move_cells do
     [row_0: [col_0: "1"]]
   end
 
-  def move_cells do
+  def move_map do
     %{"1" => {:row_0, :col_0}}
   end
 end
