@@ -92,13 +92,14 @@ defmodule TicTacToe.Computer do
           IO.puts("last: #{last_score}, this: #{branch_score}")
 
           last_score
-          |> max(branch_score)
+          |> max(-branch_score)
         end)
 
       done ->
-        IO.puts("STOOP done: #{done * mult} char: #{char} move: #{move} bef: #{before_move} aft: #{after_move}")
+        IO.puts("STOOP done: #{done * mult} char: #{char}")
         done * mult
     end
+        |> (&(&1 * -1)).()
   end
 
   def sum_branch(win_state, chars = %{1 => my_char}, before_move, after_move, move, collector_pid) do
@@ -133,6 +134,8 @@ defmodule TicTacToe.Computer do
   def collect(last_max, rem_moves, dead_workers, root_pid) do
     receive do
       {:game_over, best_move, worker_pid} ->
+        IO.puts("game over #{best_move}")
+
         root_pid
         |> send({Set.put(dead_workers, worker_pid), best_move})
 
