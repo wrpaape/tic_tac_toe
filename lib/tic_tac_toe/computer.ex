@@ -27,28 +27,40 @@ defmodule TicTacToe.Computer do
 
     collector_pid =
       __MODULE__
-      |> spawn_link(:collect, [nil, length(valids), self])
+      |> spawn(:collect, [nil, length(valids), self])
     
 
     valids
-    |> Enum.reduce({[], valids}, fn(_move, {before_move, [move | after_move]})->
-      report = fn(branch_sum)->
-        collector_pid
-        |> send({branch_sum, move})
-      end
-
+    |> Enum.reduce_while({[], valids}, fn(_move, {before_move, [move | after_move]})->
       move
       |> EndGame.next_win_state(my_char, win_state) 
       |> case do
-        game_over when is_number(game_over) ->
-          report.(game_over)
+        1 ->
+          self
+          |> send(move)
+
+          {:halt, :guaranteed_win}
+
 
         next_win_state ->
-        __MODULE__
-        |> spawn(:sum_branch, [before_move ++ after_move, win_state, -1, chars, report])
-      end
+          next_win_state
+          |> case do
+            0 ->
+              collector_pid
+              |> send({0, move})
 
-      {[move | before_move], after_move}
+            _ ->
+              __MODULE__
+              |> spawn(:sum_branch, [next_win_state,
+                                     chars,
+                                     before_move,
+                                     after_move,
+                                     collector_pid,
+                                     move])
+          end
+
+          {:cont, {[move | before_move], after_move}}
+      end
     end)
 
     receive do
@@ -56,60 +68,59 @@ defmodule TicTacToe.Computer do
         best_move
         |> IO.write
 
+        collector_pid
+        |> Process.exit(:kill)
+
       {:reply, best_move, chars}
     end
   end
 
-  def do_branch(0,    _,    _,  _,    _,   _),   do: 0
-  def do_branch(1,    me,   me, them, _,   _),   do: 1
-  def do_branch(1,    them, me, them, _,   _),   do: -1
-  def do_branch(wnst, me,   me, them, bef, aft), do: reduce_branch(wnst, them, me, them, bef ++ aft)
-  def do_branch(wnst, them, me, them, bef, aft), do: reduce_branch(wnst, me,   me, them, bef ++ aft)
+  def do_branch(done, mult, _, _, _) when is_number(done),       do: done * mult
+  def do_branch(win_state, mult, chars, before_move, after_move) do
+    before_move
+    |> Enum.concat(after_move)
+    |> reduce_branch(mult * -1, chars, win_state)
+  end
 
+  def reduce_branch(rem_moves, mult, chars, win_state) do
+    next_char =
+      chars
+      |> Map.get(mult)
 
-  def sum_branch(rem_moves, win_state, mult, chars, report) do
     rem_moves
     |> Enum.reduce({0, [], rem_moves}, fn(_move, {acc_sum, before_move, [move | after_move]})->
       branch_sum = 
         move
-        |> EndGame.next_win_state(next_up, win_state)
+        |> EndGame.next_win_state(next_char, win_state)
+        |> do_branch(mult, chars, before_move, after_move)
 
       {acc_sum + branch_sum, [move | before_move], after_move}
     end)
     |> elem(0)
-    |> report.()
   end
 
-  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
-  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
-  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
-    branch_score = 
-      move
-      |> EndGame.next_win_state(me, win_state)
-      |> reduce_branch(me, me, them, before_move, after_move) 
+
+  def sum_branch(win_state, chars, before_move, after_move, collector_pid, move) do
+    branch_sum =
+      win_state
+      |> do_branch(1, chars, before_move, after_move)
 
     collector_pid
-    |> send({branch_score, move})
+    |> send({branch_sum, move})
+
+    exit(:kill)
   end
 
   # helpers v
 
-  def collect({_, best_move}, 0, parent_pid),   do: send(parent_pid, best_move)
-  def collect(last_best, rem_moves, parent_pid) do
+  def collect({_, best_move}, 0, parent_pid),  do: send(parent_pid, best_move)
+  def collect(last_max, rem_moves, parent_pid) do
     receive do
       move_sum ->
         move_sum 
         |> IO.inspect
-        |> max(last_best)
+        |> max(last_max)
         |> collect(rem_moves - 1, parent_pid)
     end
-  end
-
-  defp build_fact_sequence(open_rem_cells) do
-    1..open_rem_cells
-    |> Enum.scan(&(&1 * &2))
-    |> Enum.reverse
-    |> Enum.take_every(2)
-    |> Mis.wrap_pre(:ok)
   end
 end

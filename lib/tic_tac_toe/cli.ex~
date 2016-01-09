@@ -44,7 +44,7 @@ defmodule TicTacToe.CLI do
       @coin_flip_prompt
       |> IO.gets
       |> String.match?(coin_flip_reg)
-      |> if(do: {:app, "first"}, else: {:pre, "second"})
+      |> if(do: {:pre, "first"}, else: {:app, "second"})
 
     {valids, move_set_str} =
       @move_sets
@@ -97,7 +97,6 @@ defmodule TicTacToe.CLI do
       |> Enum.random
       |> Utils.wrap_pre(computer_color)
       |> Utils.wrap_pre(Computer)
-      # |> Utils.wrap_pre(Player)
       |> Utils.wrap({Player, {player_color, char}}, wrap_dir)
     else
       char
