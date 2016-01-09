@@ -27,7 +27,7 @@ defmodule TicTacToe.Computer do
 
     collector_pid =
       __MODULE__
-      |> spawn(:collect, [nil, length(valids), self])
+      |> spawn(:collect, ["", length(valids), self])
     
 
     valids
@@ -51,10 +51,9 @@ defmodule TicTacToe.Computer do
 
             _ ->
               __MODULE__
-              |> spawn(:sum_branch, [next_win_state,
+              |> spawn(:sum_branch, [before_move ++ after_move,
                                      chars,
-                                     before_move,
-                                     after_move,
+                                     next_win_state,
                                      collector_pid,
                                      move])
           end
@@ -75,6 +74,7 @@ defmodule TicTacToe.Computer do
     end
   end
 
+  def do_branch(done, mult, _, _, _) 
   def do_branch(done, mult, _, _, _) when is_number(done),       do: done * mult
   def do_branch(win_state, mult, chars, before_move, after_move) do
     before_move
@@ -87,26 +87,39 @@ defmodule TicTacToe.Computer do
       chars
       |> Map.get(mult)
 
-    rem_moves
-    |> Enum.reduce({0, [], rem_moves}, fn(_move, {acc_sum, before_move, [move | after_move]})->
-      branch_sum = 
-        move
-        |> EndGame.next_win_state(next_char, win_state)
-        |> do_branch(mult, chars, before_move, after_move)
+    {next_acc_sum, next_win_states, _, _} =
+      rem_moves
+      |> Enum.reduce({0, [], [], rem_moves}, fn(_move, {acc_sum, win_states, before_move, [move | after_move]})->
+        {next_acc_sum, next_win_states} =
+          move
+          |> EndGame.next_win_state(next_char, win_state)
+          |> case do
+            done when is_number(done) ->
+              {acc_sum + done, win_states}
 
-      {acc_sum + branch_sum, [move | before_move], after_move}
+            win_state ->
+              {acc_sum, [{win_state, before_move ++ after_move} | win_states]}
+          end
+
+        {next_acc_sum, next_win_states, [move | before_move], after_move}
+      end)
+
+    next_win_states
+    |> Enum.reduce(next_acc_sum * mult, fn({win_state, rem_moves}, branch_max)->
+      rem_moves
+      |> reduce_branch(-mult, chars, win_state)
+      |> max(branch_max)
     end)
-    |> elem(0)
   end
 
 
-  def sum_branch(win_state, chars, before_move, after_move, collector_pid, move) do
-    branch_sum =
-      win_state
-      |> do_branch(1, chars, before_move, after_move)
+  def sum_branch(rem_moves, chars, win_state, collector_pid, move) do
+    branch_max =
+      rem_moves
+      |> reduce_branch(-1, chars, win_state)
 
     collector_pid
-    |> send({branch_sum, move})
+    |> send({branch_max, move})
 
     exit(:kill)
   end
@@ -119,7 +132,7 @@ defmodule TicTacToe.Computer do
       move_sum ->
         move_sum 
         |> IO.inspect
-        |> max(last_max)
+        |> min(last_max)
         |> collect(rem_moves - 1, parent_pid)
     end
   end

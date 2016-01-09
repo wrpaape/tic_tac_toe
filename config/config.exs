@@ -58,7 +58,7 @@ move_sets =
   end)
 
 token_colors =
-  ~w(red green yellow blue cyan magenta yellow black)a
+  ~w(red green blue cyan magenta yellow black)a
   |> Enum.map(fn(color)->
     ANSI.bright <> apply(ANSI, color, [])
   end)
