@@ -118,6 +118,7 @@ defmodule TicTacToe.Computer do
     receive do
       move_sum ->
         move_sum 
+        |> IO.inspect
         |> max(last_max)
         |> collect(rem_moves - 1, parent_pid)
     end
