@@ -12,11 +12,16 @@ defmodule TicTacToe.Computer do
 
   # external api ^
 
-  def init(turn_tup), do: {:ok, turn_tup}
+  def init({my_char, their_char}) do
+    Map.new
+    |> Map.put(1, my_char)
+    |> Map.put(-1, their_char)
+    |> Utils.wrap_pre(:ok)
+  end
 
   def handle_call(:state, _from, state), do: {:ok, state, state}
 
-  def handle_call({:next_move, {board, valids, win_state}}, _from, chars) do
+  def handle_call({:next_move, {board, valids, win_state}}, _from, chars = %{1 => my_char}) do
     board
     |> IO.write
 
@@ -27,8 +32,21 @@ defmodule TicTacToe.Computer do
 
     valids
     |> Enum.reduce({[], valids}, fn(_move, {before_move, [move | after_move]})->
-      __MODULE__
-      |> spawn(:sum_branch, [move, before_move, after_move, win_state, chars,  collector_pid])
+      report = fn(branch_sum)->
+        collector_pid
+        |> send({branch_sum, move})
+      end
+
+      move
+      |> EndGame.next_win_state(my_char, win_state) 
+      |> case do
+        game_over when is_number(game_over) ->
+          report.(game_over)
+
+        next_win_state ->
+        __MODULE__
+        |> spawn(:sum_branch, [before_move ++ after_move, win_state, -1, chars, report])
+      end
 
       {[move | before_move], after_move}
     end)
@@ -48,24 +66,36 @@ defmodule TicTacToe.Computer do
   def do_branch(wnst, me,   me, them, bef, aft), do: reduce_branch(wnst, them, me, them, bef ++ aft)
   def do_branch(wnst, them, me, them, bef, aft), do: reduce_branch(wnst, me,   me, them, bef ++ aft)
 
-  def reduce_branch(win_state, next_up, me, them, rem_moves) do
+
+  def sum_branch(rem_moves, win_state, mult, chars, report) do
     rem_moves
     |> Enum.reduce({0, [], rem_moves}, fn(_move, {acc_sum, before_move, [move | after_move]})->
       branch_sum = 
         move
         |> EndGame.next_win_state(next_up, win_state)
-        |> do_branch(next_up, me, them, before_move, after_move)
+        |> case do
+          game_over when is_number(game_over) ->
+            collector_pid
+            |> send({game_over, move})
+
+          next_win_state ->
+
+        end
+
 
       {acc_sum + branch_sum, [move | before_move], after_move}
     end)
     |> elem(0)
+    |> report.()
   end
 
-  def sum_branch(move, before_move, after_move, win_state, {me, them}, collector_pid) do
+  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
+  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
+  def sum_branch(move, before_move, after_move, win_state, chars, collector_pid) do
     branch_score = 
       move
       |> EndGame.next_win_state(me, win_state)
-      |> do_branch(me, me, them, before_move, after_move) 
+      |> reduce_branch(me, me, them, before_move, after_move) 
 
     collector_pid
     |> send({branch_score, move})
