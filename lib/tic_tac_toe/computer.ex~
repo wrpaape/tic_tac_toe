@@ -71,7 +71,6 @@ defmodule TicTacToe.Computer do
         |> EndGame.next_win_state(char, win_state)
         |> case do
           done when is_number(done) ->
-            IO.puts("STOOP done: #{done * mult} char: #{char} move: #{move} bef: #{before_move} aft: #{after_move}")
             {:halt, done}
 
           next_win_state ->
@@ -89,12 +88,15 @@ defmodule TicTacToe.Computer do
             before_move
             |> Enum.concat(after_move)
             |> do_branch(next_mult, chars, next_win_state)
+          
+          IO.puts("last: #{last_score}, this: #{branch_score}")
 
           last_score
           |> max(branch_score)
         end)
 
       done ->
+        IO.puts("STOOP done: #{done * mult} char: #{char} move: #{move} bef: #{before_move} aft: #{after_move}")
         done * mult
     end
   end
@@ -130,7 +132,7 @@ defmodule TicTacToe.Computer do
 
   def collect(last_max, rem_moves, dead_workers, root_pid) do
     receive do
-      {:game_over, best_move, branch_score} ->
+      {:game_over, best_move, worker_pid} ->
         root_pid
         |> send({Set.put(dead_workers, worker_pid), best_move})
 
