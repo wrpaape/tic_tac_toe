@@ -13,16 +13,9 @@ defmodule TicTacToe.Computer do
   # external api ^
 
   def init(chars), do: {:ok, chars}
-  # def init({my_char, their_char}) do
-  #   Map.new
-  #   |> Map.put(1.0, my_char)
-  #   |> Map.put(-1.0, their_char)
-  #   |> Utils.wrap_pre(:ok)
-  # end
 
   def handle_call(:state, _from, state), do: {:ok, state, state}
 
-  # def handle_call({:next_move, {board, valids, win_state}}, _from, chars = %{1.0 => my_char}) do
   def handle_call({:next_move, {board, valids, win_state}}, _from, chars = {my_char, their_char}) do
     board
     |> IO.write
@@ -43,21 +36,54 @@ defmodule TicTacToe.Computer do
       end)
       |> case do
         {child_states, _, _} ->
-          child_states
-          |> reduce_child_states(-0.5, {their_char, my_char})
-          |> elem(1)
-          |> IO.inspect
+          num_children =
+            child_states
+            |> length
+
+          collector_pid = 
+            __MODULE__
+            |> spawn(:collect, [nil, num_children, self])
+
+          __MODULE__
+          |> spawn(:reduce_child_states, [child_states, -0.5, {their_char, my_char}, num_children, collector_pid])
+
+          receive do
+            {_move_score, best_move} ->
+              best_move
+          end
+
 
         last_move ->
           last_move
       end
 
+    best_move
+    |> IO.write
+
     {:reply, best_move, chars}
   end
 
-  def reduce_child_states(child_states, mult, {char, next_char}) do
+  def collect(best_score_tup, 0, parent_pid) do
+    parent_pid
+    |> send(best_score_tup)
+
+    exit(:kill)
+  end
+
+  def collect(last_best_score_tup, rem_children, parent_pid) do
+    receive do
+      score_tup ->
+        # IO.puts("#{inspect score_tup} #{rem_children}")
+        last_best_score_tup
+        |> max(score_tup)
+        |> collect(rem_children - 1, parent_pid)
+    end
+  end
+
+  def reduce_child_states(child_states, mult, {char, next_char}, num_children, collector_pid) do
     child_states
-    |> Enum.reduce(nil, fn({before_move, after_move, win_state, root_move}, last_score)->
+    # |> Enum.reduce(nil, fn({before_move, after_move, win_state, root_move}, last_score_tup)->
+    |> Enum.each(fn({before_move, after_move, win_state, root_move})->
       rem_moves =
         before_move
         |> Enum.concat(after_move)
@@ -76,16 +102,23 @@ defmodule TicTacToe.Computer do
         end
       end)
       |> case do
-        {child_states, _, _} ->
-          child_states
-          |> reduce_child_states(mult * -0.5, {next_char, char})
+        {next_child_states, _, _} ->
+          next_num_children = num_children - 1
+
+          next_collector_pid = 
+            __MODULE__
+            |> spawn(:collect, [nil, next_num_children, collector_pid])
+
+          __MODULE__
+          |> spawn(:reduce_child_states, [next_child_states, -0.5 * mult, {next_char, char}, next_num_children, next_collector_pid])
 
          root_move_score ->
-           {root_move_score, root_move}
+           collector_pid
+           |> send({root_move_score, root_move})
       end
-      |> IO.inspect
-      |> max(last_score)
     end)
+
+    exit(:kill)
   end
 end
 

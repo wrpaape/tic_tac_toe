@@ -24,11 +24,11 @@ move_lists = [{1, ~w(1)},
                      q w)},
               {3, ~w(1 2 3
                      q w e
-                     a s d)}]
-              # {4, ~w(1 2 3 4
-              #        q w e r
-              #        a s d f
-              #        z x c v)}]
+                     a s d)},
+              {4, ~w(1 2 3 4
+                     q w e r
+                     a s d f
+                     z x c v)}]
 
 move_sets =
   move_lists
@@ -64,9 +64,9 @@ token_colors =
   end)
 
 config :tic_tac_toe, [min_board_size: 1,
-                      # max_board_size: 4,
-                      max_board_size: 3,
-                      def_board_size: 3,
+                      max_board_size: 4,
+                      # def_board_size: 3,
+                      def_board_size: 4,
                       cursor:         ANSI.blink_slow <> "\n> " <> ANSI.reset,
                       token_colors:   token_colors,
                       move_lists:     Enum.into(move_lists, Map.new),
