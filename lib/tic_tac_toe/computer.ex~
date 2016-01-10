@@ -12,71 +12,81 @@ defmodule TicTacToe.Computer do
 
   # external api ^
 
-  def init({my_char, their_char}) do
-    Map.new
-    |> Map.put(1, my_char)
-    |> Map.put(-1, their_char)
-    |> Utils.wrap_pre(:ok)
-  end
+  def init(chars), do: {:ok, chars}
+  # def init({my_char, their_char}) do
+  #   Map.new
+  #   |> Map.put(1.0, my_char)
+  #   |> Map.put(-1.0, their_char)
+  #   |> Utils.wrap_pre(:ok)
+  # end
 
   def handle_call(:state, _from, state), do: {:ok, state, state}
 
-  def handle_call({:next_move, {board, valids, win_state}}, _from, chars = %{1 => my_char}) do
+  # def handle_call({:next_move, {board, valids, win_state}}, _from, chars = %{1.0 => my_char}) do
+  def handle_call({:next_move, {board, valids, win_state}}, _from, chars = {my_char, their_char}) do
     board
     |> IO.write
 
-    score_moves =
+    best_move =
       valids
-      |> Enum.map_reduce({[], valids}, fn(_move, {before_move, [move | after_move]})->
+      |> Enum.reduce_while({[], [], valids}, fn(_move, {child_states, before_move, [move | after_move]})->
         move
         |> EndGame.next_win_state(my_char, win_state)
-        |> reduce_branch(-1, chars, before_move, after_move)
-        |> flip
-        |> Utils.wrap_app(move)
-        |> Utils.wrap_app({[move | before_move], after_move})
-      end)
-      |> elem(0)
-      |> IO.inspect
+        |> case do
+          done when is_number(done) ->
+            {:halt, move}
 
-    best_move =
-      score_moves
-      |> Enum.max
-      |> elem(1)
+          next_win_state ->
+            {[{before_move, after_move, next_win_state, move} | child_states], [move | before_move], after_move}
+            |> Utils.wrap_pre(:cont)
+        end
+      end)
+      |> case do
+        {child_states, _, _} ->
+          child_states
+          |> reduce_child_states(-0.5, {their_char, my_char})
+          |> elem(1)
+          |> IO.inspect
+
+        last_move ->
+          last_move
+      end
 
     {:reply, best_move, chars}
   end
 
-  def reduce_branch(done, mult, _, _, _) when is_number(done),     do: done * mult
-  def reduce_branch(win_state, mult, chars, before_rem, after_rem) do
-    char =
-      chars
-      |> Map.get(mult)
+  def reduce_child_states(child_states, mult, {char, next_char}) do
+    child_states
+    |> Enum.reduce(nil, fn({before_move, after_move, win_state, root_move}, last_score)->
+      rem_moves =
+        before_move
+        |> Enum.concat(after_move)
 
-    rem_moves =
-      before_rem
-      |> Enum.concat(after_rem)
-
-    next_mult =
-      mult
-      |> flip
-
-    rem_moves
-    |> Enum.reduce({-2, [], rem_moves}, fn(_move, {last_score, before_move, [move | after_move]})->
-      IO.puts("last_score: #{last_score}, move: #{move}, bef: #{before_move}, aft: #{after_move} char: #{char}")
-
-      next_score =
+      rem_moves
+      |> Enum.reduce_while({[], [], rem_moves}, fn(_move, {child_states, before_move, [move | after_move]})->
         move
         |> EndGame.next_win_state(char, win_state)
-        |> reduce_branch(next_mult, chars, before_move, after_move)
-        |> flip
-        |> max(last_score)
+        |> case do
+          done when is_number(done) ->
+            {:halt, done * mult}
 
-      {next_score, [move | before_move], after_move}
+          next_win_state ->
+            {[{before_move, after_move, next_win_state, root_move} | child_states], [move | before_move], after_move}
+            |> Utils.wrap_pre(:cont)
+        end
+      end)
+      |> case do
+        {child_states, _, _} ->
+          child_states
+          |> reduce_child_states(mult * -0.5, {next_char, char})
+
+         root_move_score ->
+           {root_move_score, root_move}
+      end
+      |> IO.inspect
+      |> max(last_score)
     end)
-    |> elem(0)
   end
-
-  defp flip(num), do: num * -1
 end
 
       # worker_pid =
