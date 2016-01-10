@@ -38,15 +38,14 @@ defmodule TicTacToe do
     end
   end
 
-  defp game_over({Computer, token}), do: winner_prompt("C O M P U T E R ", token)
-  defp game_over({Player, token}),   do: winner_prompt("P L A Y E R ", token)
-
   defp winner_prompt(player, {color, char}) do
     [ANSI.white_background <> color <> char <> ANSI.reset | fun_prompt(" W I N S !")]
     |> Enum.into(fun_prompt(player))
     |> game_over
   end
 
+  defp game_over({Computer, token}), do: winner_prompt("C O M P U T E R ", token)
+  defp game_over({Player, token}),   do: winner_prompt("P L A Y E R ", token)
   defp game_over(go_msg) do
     [Printer.print, "\n\n"]
     |> IO.write
@@ -58,6 +57,11 @@ defmodule TicTacToe do
 
       :timer.sleep 250
     end)
+
+   ["\n", ANSI.clear_line]
+   |> IO.write
+
+   System.halt(0)
   end
 
   # helpers v
